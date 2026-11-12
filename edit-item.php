@@ -157,25 +157,25 @@ require_once __DIR__ . '/header.php';
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Relocation Status</label>
                     <select name="status" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white">
-                        <option value="packed" <?= ($item['status'] === 'packed') ? 'selected' : '' ?>>Packed at Old Office</option>
+                        <option value="packed" <?= ($item['status'] === 'packed') ? 'selected' : '' ?>>Packed at Hamdan Sports Complex</option>
                         <option value="in_transit" <?= ($item['status'] === 'in_transit') ? 'selected' : '' ?>>In Transit</option>
-                        <option value="reached" <?= ($item['status'] === 'reached') ? 'selected' : '' ?>>Reached New Office</option>
+                        <option value="reached" <?= ($item['status'] === 'reached') ? 'selected' : '' ?>>Reached Dubai Design District</option>
                         <option value="damaged" <?= ($item['status'] === 'damaged') ? 'selected' : '' ?>>Damaged</option>
                     </select>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Old Office Location</label>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Hamdan Sports Complex Location</label>
                     <input type="text" name="old_location" value="<?= htmlspecialchars($_POST['old_location'] ?? $item['old_location']) ?>" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">New Office Destination</label>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Dubai Design District Destination</label>
                     <input type="text" name="new_location" value="<?= htmlspecialchars($_POST['new_location'] ?? $item['new_location']) ?>" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
                 </div>
 
                 <div class="sm:col-span-2">
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Old Office Packing Notes</label>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Hamdan Sports Complex Packing Notes</label>
                     <textarea name="old_condition" rows="2" class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"><?= htmlspecialchars($_POST['old_condition'] ?? $item['old_condition']) ?></textarea>
                 </div>
 
@@ -192,7 +192,9 @@ require_once __DIR__ . '/header.php';
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Received By</label>
-                    <input type="text" name="reached_by" value="<?= htmlspecialchars($_POST['reached_by'] ?? $item['reached_by']) ?>" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                    <select name="reached_by" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white font-medium">
+                        <?= render_receiver_options($_POST['reached_by'] ?? $item['reached_by']) ?>
+                    </select>
                 </div>
 
                 <div class="sm:col-span-2">

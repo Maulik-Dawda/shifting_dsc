@@ -38,7 +38,7 @@ require_once __DIR__ . '/header.php';
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
     <div>
         <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Office Relocation Dashboard</h1>
-        <p class="text-sm text-slate-500 mt-1">Track packing at old office, scan serial numbers, and verify arrival at new office.</p>
+        <p class="text-sm text-slate-500 mt-1">Track packing at Hamdan Sports Complex, scan Barcode ID, and verify arrival at Dubai Design District.</p>
     </div>
     <div class="flex items-center gap-2">
         <a href="add-item.php" class="inline-flex items-center px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-sm shadow-md shadow-sky-600/20 transition-all hover:-translate-y-0.5">
@@ -64,7 +64,7 @@ require_once __DIR__ . '/header.php';
                 </span>
                 <h2 class="text-xl sm:text-2xl font-bold mt-2">Overall Shift Progress: <?= $reachedPercent ?>%</h2>
                 <p class="text-xs sm:text-sm text-slate-300 mt-1">
-                    <?= $reachedItems ?> of <?= $totalItems ?> items have safely reached and been verified at the new office.
+                    <?= $reachedItems ?> of <?= $totalItems ?> items have safely reached and been verified at Dubai Design District.
                 </p>
             </div>
             <div class="text-right">
@@ -94,11 +94,11 @@ require_once __DIR__ . '/header.php';
             </div>
         </div>
         <div class="mt-3 flex items-center text-xs text-slate-500">
-            <span class="text-sky-600 font-semibold mr-1"><?= $packedItems ?></span> Packed at Old Office
+            <span class="text-sky-600 font-semibold mr-1"><?= $packedItems ?></span> Packed at Hamdan Sports Complex
         </div>
     </div>
 
-    <!-- Reached New Office -->
+    <!-- Reached Dubai Design District -->
     <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow transition-shadow">
         <div class="flex items-center justify-between">
             <div>
@@ -110,7 +110,7 @@ require_once __DIR__ . '/header.php';
             </div>
         </div>
         <div class="mt-3 flex items-center text-xs text-slate-500">
-            <span class="text-emerald-600 font-semibold mr-1"><?= $reachedPercent ?>%</span> Verified at New Office
+            <span class="text-emerald-600 font-semibold mr-1"><?= $reachedPercent ?>%</span> Verified at Dubai Design District
         </div>
     </div>
 

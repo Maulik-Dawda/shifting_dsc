@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $itemId = isset($_POST['item_id']) ? intval($_POST['item_id']) : 0;
 $barcodeId = isset($_POST['barcode_id']) ? trim($_POST['barcode_id']) : '';
 $serialNumber = isset($_POST['serial_number']) ? trim($_POST['serial_number']) : '';
-$reachedBy = isset($_POST['reached_by']) && trim($_POST['reached_by']) !== '' ? trim($_POST['reached_by']) : 'Staff';
+$reachedBy = isset($_POST['reached_by']) && trim($_POST['reached_by']) !== '' ? trim($_POST['reached_by']) : 'Maulik Dawda';
 $reachedCondition = isset($_POST['reached_condition']) ? trim($_POST['reached_condition']) : 'perfect';
 $reachedNotes = isset($_POST['reached_notes']) ? trim($_POST['reached_notes']) : '';
 $newLocation = isset($_POST['new_location']) ? trim($_POST['new_location']) : '';
@@ -142,7 +142,7 @@ try {
     }
 
     // Log Relocation Activity
-    $actionDesc = "Item marked as REACHED at New Office by {$reachedBy}. Condition: {$reachedCondition}. Added {$savedImageCount} arrival photo(s).";
+    $actionDesc = "Item marked as REACHED at Dubai Design District by {$reachedBy}. Condition: {$reachedCondition}. Added {$savedImageCount} arrival photo(s).";
     log_activity($itemId, 'Product Reached', $actionDesc);
 
     $bcLabel = !empty($item['barcode_id']) ? $item['barcode_id'] : $item['serial_number'];

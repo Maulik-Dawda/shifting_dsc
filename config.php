@@ -15,6 +15,31 @@ define('UPLOAD_DIR_OLD', BASE_PATH . '/uploads/old_office');
 define('UPLOAD_DIR_REACHED', BASE_PATH . '/uploads/reached_office');
 define('DATA_DIR', BASE_PATH . '/data');
 
+// Office Relocation Locations & Inbuilt Personnel
+define('LOCATION_ORIGIN', 'Hamdan Sports Complex');
+define('LOCATION_DESTINATION', 'Dubai Design District');
+define('INBUILT_RECEIVERS', [
+    'Maulik Dawda',
+    'Abdur Rehman',
+    'Arshad Khan'
+]);
+
+/**
+ * Render standard HTML option tags for Received By select dropdown
+ */
+function render_receiver_options($selected = '') {
+    $selected = trim((string)$selected);
+    $html = '<option value="">-- Select Received By --</option>';
+    foreach (INBUILT_RECEIVERS as $name) {
+        $isSel = ($selected === $name || (empty($selected) && $name === 'Maulik Dawda')) ? 'selected' : '';
+        $html .= '<option value="' . htmlspecialchars($name) . '" ' . $isSel . '>' . htmlspecialchars($name) . '</option>';
+    }
+    if (!empty($selected) && !in_array($selected, INBUILT_RECEIVERS)) {
+        $html .= '<option value="' . htmlspecialchars($selected) . '" selected>' . htmlspecialchars($selected) . ' (Other)</option>';
+    }
+    return $html;
+}
+
 /**
  * Bulletproof Environment Parser (Does NOT rely on putenv/getenv which may be disabled on Hostinger)
  */
@@ -308,6 +333,11 @@ function initialize_database($pdo, $driver = 'mysql') {
                 $pdo->exec("ALTER TABLE items ADD COLUMN barcode_id TEXT DEFAULT ''");
                 $pdo->exec("UPDATE items SET barcode_id = serial_number WHERE barcode_id = '' OR barcode_id IS NULL");
             }
+            $pdo->exec("UPDATE items SET old_location = REPLACE(old_location, 'Old Office', 'Hamdan Sports Complex') WHERE old_location LIKE '%Old Office%'");
+            $pdo->exec("UPDATE items SET new_location = REPLACE(new_location, 'New Office', 'Dubai Design District') WHERE new_location LIKE '%New Office%'");
+            $pdo->exec("UPDATE items SET reached_notes = REPLACE(reached_notes, 'new office', 'Dubai Design District') WHERE reached_notes LIKE '%new office%'");
+            $pdo->exec("UPDATE items SET reached_notes = REPLACE(reached_notes, 'New Office', 'Dubai Design District') WHERE reached_notes LIKE '%New Office%'");
+            $pdo->exec("UPDATE items SET reached_by = 'Maulik Dawda' WHERE reached_by = 'Staff' OR reached_by = 'IT Relocation Team'");
         } catch (Throwable $e) {}
 
         seed_sample_data($pdo);
@@ -371,6 +401,17 @@ function initialize_database($pdo, $driver = 'mysql') {
             // Non-critical if table is fresh or user doesn't have ALTER permissions
         }
 
+        // Migrate Old Office -> Hamdan Sports Complex and New Office -> Dubai Design District in existing data
+        try {
+            $pdo->exec("UPDATE items SET old_location = REPLACE(old_location, 'Old Office', 'Hamdan Sports Complex') WHERE old_location LIKE '%Old Office%'");
+            $pdo->exec("UPDATE items SET new_location = REPLACE(new_location, 'New Office', 'Dubai Design District') WHERE new_location LIKE '%New Office%'");
+            $pdo->exec("UPDATE items SET reached_notes = REPLACE(reached_notes, 'new office', 'Dubai Design District') WHERE reached_notes LIKE '%new office%'");
+            $pdo->exec("UPDATE items SET reached_notes = REPLACE(reached_notes, 'New Office', 'Dubai Design District') WHERE reached_notes LIKE '%New Office%'");
+            $pdo->exec("UPDATE items SET reached_by = 'Maulik Dawda' WHERE reached_by = 'Staff' OR reached_by = 'IT Relocation Team'");
+        } catch (Throwable $migrEx) {
+            // Ignore if columns do not exist
+        }
+
         seed_sample_data($pdo);
     }
 }
@@ -390,13 +431,13 @@ function seed_sample_data($pdo) {
                 'barcode_id' => 'BC-DSC-001',
                 'serial_number' => 'SN-DELL-7090-XYZ',
                 'category' => 'Workstation',
-                'old_location' => 'Old Office - IT Dept Desk 04',
-                'new_location' => 'New Office - 3rd Floor IT Bay',
+                'old_location' => 'Hamdan Sports Complex - IT Dept Desk 04',
+                'new_location' => 'Dubai Design District - 3rd Floor IT Bay',
                 'status' => 'reached',
                 'old_condition' => 'Clean condition, power cord and HDMI cable attached in box.',
                 'reached_by' => 'Maulik Dawda',
                 'reached_condition' => 'perfect',
-                'reached_notes' => 'Received intact and booted up successfully at new office.',
+                'reached_notes' => 'Received intact and booted up successfully at Dubai Design District.',
                 'reached_at' => date('Y-m-d H:i:s')
             ],
             [
@@ -405,8 +446,8 @@ function seed_sample_data($pdo) {
                 'barcode_id' => 'BC-DSC-002',
                 'serial_number' => 'SN-HP-428-8821',
                 'category' => 'Printers',
-                'old_location' => 'Old Office - Admin Printing Station',
-                'new_location' => 'New Office - Admin Print Hub',
+                'old_location' => 'Hamdan Sports Complex - Admin Printing Station',
+                'new_location' => 'Dubai Design District - Admin Print Hub',
                 'status' => 'packed',
                 'old_condition' => 'Toner removed and packed in separate anti-static pouch. Unit secured with bubble wrap.',
                 'reached_by' => null,
@@ -420,8 +461,8 @@ function seed_sample_data($pdo) {
                 'barcode_id' => 'BC-DSC-003',
                 'serial_number' => 'C02G89XYMD6R',
                 'category' => 'Laptops',
-                'old_location' => 'Old Office - Design Studio Desk 01',
-                'new_location' => 'New Office - Creative Wing Desk 12',
+                'old_location' => 'Hamdan Sports Complex - Design Studio Desk 01',
+                'new_location' => 'Dubai Design District - Creative Wing Desk 12',
                 'status' => 'packed',
                 'old_condition' => 'Supplied with original 140W MagSafe charger and sleeve.',
                 'reached_by' => null,
@@ -435,13 +476,13 @@ function seed_sample_data($pdo) {
                 'barcode_id' => 'BC-DSC-004',
                 'serial_number' => 'FCW1942B02Y',
                 'category' => 'Networking',
-                'old_location' => 'Old Office - Main Server Rack 1U-12',
-                'new_location' => 'New Office - Server Room Rack A-04',
+                'old_location' => 'Hamdan Sports Complex - Main Server Rack 1U-12',
+                'new_location' => 'Dubai Design District - Server Room Rack A-04',
                 'status' => 'reached',
                 'old_condition' => 'Rack ears attached, console cable included.',
-                'reached_by' => 'IT Relocation Team',
+                'reached_by' => 'Abdur Rehman',
                 'reached_condition' => 'perfect',
-                'reached_notes' => 'Mounted into Rack A at New Office.',
+                'reached_notes' => 'Mounted into Rack A at Dubai Design District.',
                 'reached_at' => date('Y-m-d H:i:s')
             ],
             [
@@ -450,8 +491,8 @@ function seed_sample_data($pdo) {
                 'barcode_id' => 'BC-DSC-005',
                 'serial_number' => 'ZX82HV1092',
                 'category' => 'Monitors',
-                'old_location' => 'Old Office - Finance Desk 02',
-                'new_location' => 'New Office - Finance Hub Desk 08',
+                'old_location' => 'Hamdan Sports Complex - Finance Desk 02',
+                'new_location' => 'Dubai Design District - Finance Hub Desk 08',
                 'status' => 'packed',
                 'old_condition' => 'Packed with foam corner protectors and power adapter.',
                 'reached_by' => null,

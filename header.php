@@ -117,7 +117,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 <i class="fa-solid fa-boxes-stacked mr-2 text-sky-400"></i> All Items
             </a>
             <a href="add-item.php" class="block px-3 py-2.5 rounded-lg text-base font-medium <?= ($currentPage == 'add-item.php') ? 'bg-sky-600 text-white' : 'text-slate-300 hover:bg-slate-800' ?>">
-                <i class="fa-solid fa-plus mr-2 text-sky-400"></i> Pack Item (Old Office)
+                <i class="fa-solid fa-plus mr-2 text-sky-400"></i> Pack Item (Hamdan Sports Complex)
             </a>
             <a href="reached.php" class="block px-3 py-2.5 rounded-lg text-base font-medium <?= ($currentPage == 'reached.php') ? 'bg-emerald-600 text-white' : 'text-emerald-400 hover:bg-slate-800' ?>">
                 <i class="fa-solid fa-clipboard-check mr-2"></i> Product Reached (Checklist)

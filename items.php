@@ -114,9 +114,9 @@ require_once __DIR__ . '/header.php';
         <div>
             <select name="status" class="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white">
                 <option value="">All Statuses</option>
-                <option value="packed" <?= ($status === 'packed') ? 'selected' : '' ?>>Packed at Old Office</option>
+                <option value="packed" <?= ($status === 'packed') ? 'selected' : '' ?>>Packed at Hamdan Sports Complex</option>
                 <option value="in_transit" <?= ($status === 'in_transit') ? 'selected' : '' ?>>In Transit</option>
-                <option value="reached" <?= ($status === 'reached') ? 'selected' : '' ?>>Reached New Office</option>
+                <option value="reached" <?= ($status === 'reached') ? 'selected' : '' ?>>Reached Dubai Design District</option>
                 <option value="damaged" <?= ($status === 'damaged') ? 'selected' : '' ?>>Damaged / Attention</option>
             </select>
         </div>
@@ -209,8 +209,8 @@ require_once __DIR__ . '/header.php';
                             <!-- Route -->
                             <td class="py-3.5 px-4 text-xs text-slate-500">
                                 <div class="truncate max-w-[180px]">
-                                    <span class="text-slate-400">From:</span> <?= htmlspecialchars($item['old_location'] ?: 'Old Office') ?><br>
-                                    <span class="text-emerald-600 font-semibold">To:</span> <?= htmlspecialchars($item['new_location'] ?: 'New Office') ?>
+                                    <span class="text-slate-400">From:</span> <?= htmlspecialchars($item['old_location'] ?: 'Hamdan Sports Complex') ?><br>
+                                    <span class="text-emerald-600 font-semibold">To:</span> <?= htmlspecialchars($item['new_location'] ?: 'Dubai Design District') ?>
                                 </div>
                             </td>
                             <!-- Photos Count -->

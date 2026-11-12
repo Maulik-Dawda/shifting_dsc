@@ -1,5 +1,5 @@
 <?php
-// view.php - Item Detail & Comparison (Old Office vs Product Reached New Office)
+// view.php - Item Detail & Comparison (Hamdan Sports Complex vs Product Reached Dubai Design District)
 require_once __DIR__ . '/config.php';
 $db = get_db();
 
@@ -143,7 +143,7 @@ require_once __DIR__ . '/header.php';
                     <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900"><?= htmlspecialchars($item['brand']) ?> <?= htmlspecialchars($item['model']) ?></h1>
                     <?php if ($item['status'] === 'reached'): ?>
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
-                            <i class="fa-solid fa-check-circle mr-1"></i> Reached New Office
+                            <i class="fa-solid fa-check-circle mr-1"></i> Reached Dubai Design District
                         </span>
                     <?php elseif ($item['status'] === 'in_transit'): ?>
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
@@ -151,7 +151,7 @@ require_once __DIR__ . '/header.php';
                         </span>
                     <?php else: ?>
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
-                            <i class="fa-solid fa-box mr-1"></i> Packed at Old Office
+                            <i class="fa-solid fa-box mr-1"></i> Packed at Hamdan Sports Complex
                         </span>
                     <?php endif; ?>
                 </div>
@@ -182,19 +182,19 @@ require_once __DIR__ . '/header.php';
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-6">
         <!-- Old Location -->
         <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-            <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Source (Old Office)</span>
+            <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Source (Hamdan Sports Complex)</span>
             <span class="text-sm font-bold text-slate-800 mt-1 flex items-center">
                 <i class="fa-solid fa-building text-slate-400 mr-2 text-xs"></i>
-                <?= htmlspecialchars($item['old_location'] ?: 'Old Office Main') ?>
+                <?= htmlspecialchars($item['old_location'] ?: 'Hamdan Sports Complex Main') ?>
             </span>
         </div>
 
         <!-- New Location -->
         <div class="p-3.5 bg-emerald-50/60 rounded-xl border border-emerald-100">
-            <span class="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider block">Destination (New Office)</span>
+            <span class="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider block">Destination (Dubai Design District)</span>
             <span class="text-sm font-bold text-emerald-900 mt-1 flex items-center">
                 <i class="fa-solid fa-location-dot text-emerald-600 mr-2 text-xs"></i>
-                <?= htmlspecialchars($item['new_location'] ?: 'New Office Bay') ?>
+                <?= htmlspecialchars($item['new_location'] ?: 'Dubai Design District Bay') ?>
             </span>
         </div>
 
@@ -232,7 +232,7 @@ require_once __DIR__ . '/header.php';
 </div>
 
 <!-- ====================================================================== -->
-<!-- SIDE-BY-SIDE VISUAL COMPARISON: OLD OFFICE vs PRODUCT REACHED NEW OFFICE -->
+<!-- SIDE-BY-SIDE VISUAL COMPARISON: HAMDAN SPORTS COMPLEX vs PRODUCT REACHED DUBAI DESIGN DISTRICT -->
 <!-- ====================================================================== -->
 <div class="mb-8">
     <div class="flex items-center justify-between mb-4">
@@ -241,19 +241,19 @@ require_once __DIR__ . '/header.php';
                 <i class="fa-solid fa-camera-rotate mr-2 text-sky-600"></i>
                 Stage Photo Comparison
             </h2>
-            <p class="text-xs text-slate-500 mt-0.5">Compare photos taken at the old office against photos taken on arrival at the new office.</p>
+            <p class="text-xs text-slate-500 mt-0.5">Compare photos taken at Hamdan Sports Complex against photos taken on arrival at Dubai Design District.</p>
         </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        <!-- LEFT COLUMN: OLD OFFICE PACKING PHOTOS -->
+        <!-- LEFT COLUMN: HAMDAN SPORTS COMPLEX PACKING PHOTOS -->
         <div class="bg-white rounded-2xl border-2 border-slate-200 shadow-sm overflow-hidden flex flex-col">
             <!-- Header -->
             <div class="px-5 py-4 bg-slate-100 border-b border-slate-200 flex items-center justify-between">
                 <div class="flex items-center space-x-2">
                     <span class="w-3 h-3 rounded-full bg-sky-500"></span>
-                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">Images at Old Office (Before Shifting)</h3>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">Images at Hamdan Sports Complex (Before Shifting)</h3>
                 </div>
                 <span class="text-xs font-semibold px-2 py-0.5 bg-sky-100 text-sky-800 rounded-full">
                     <?= count($oldImages) ?> photo<?= count($oldImages) !== 1 ? 's' : '' ?>
@@ -271,12 +271,12 @@ require_once __DIR__ . '/header.php';
                 <?php if (empty($oldImages)): ?>
                     <div class="text-center py-12 text-slate-400">
                         <i class="fa-solid fa-camera text-4xl mb-2 text-slate-300"></i>
-                        <p class="text-xs font-semibold">No photos attached at Old Office stage.</p>
+                        <p class="text-xs font-semibold">No photos attached at Hamdan Sports Complex stage.</p>
                     </div>
                 <?php else: ?>
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         <?php foreach ($oldImages as $img): ?>
-                            <div class="relative group rounded-xl overflow-hidden aspect-square border border-slate-200 shadow-sm bg-slate-100 cursor-pointer" onclick="openLightbox('<?= htmlspecialchars($img['image_path']) ?>', '<?= htmlspecialchars($item['brand'] . ' ' . $item['model'] . ' - Old Office Stage') ?>')">
+                            <div class="relative group rounded-xl overflow-hidden aspect-square border border-slate-200 shadow-sm bg-slate-100 cursor-pointer" onclick="openLightbox('<?= htmlspecialchars($img['image_path']) ?>', '<?= htmlspecialchars($item['brand'] . ' ' . $item['model'] . ' - Hamdan Sports Complex Stage') ?>')">
                                 <img src="<?= htmlspecialchars($img['image_path']) ?>" class="w-full h-full object-cover img-zoom-hover">
                                 <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-sm transition-opacity">
                                     <i class="fa-solid fa-magnifying-glass-plus"></i>
@@ -294,22 +294,22 @@ require_once __DIR__ . '/header.php';
                 <?php endif; ?>
             </div>
 
-            <!-- Add More Old Office Photos Bar -->
+            <!-- Add More Hamdan Sports Complex Photos Bar -->
             <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
                 <button type="button" onclick="openAddPhotosModal('old_office')" class="px-3 py-1.5 bg-white hover:bg-slate-100 text-sky-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-sm flex items-center space-x-1.5">
                     <i class="fa-solid fa-camera"></i>
-                    <span>Add Old Office Photos</span>
+                    <span>Add Hamdan Sports Complex Photos</span>
                 </button>
             </div>
         </div>
 
-        <!-- RIGHT COLUMN: PRODUCT REACHED NEW OFFICE PHOTOS -->
+        <!-- RIGHT COLUMN: PRODUCT REACHED DUBAI DESIGN DISTRICT PHOTOS -->
         <div class="bg-white rounded-2xl border-2 <?= ($item['status'] === 'reached') ? 'border-emerald-300' : 'border-slate-200' ?> shadow-sm overflow-hidden flex flex-col">
             <!-- Header -->
             <div class="px-5 py-4 <?= ($item['status'] === 'reached') ? 'bg-emerald-50 border-b border-emerald-200' : 'bg-slate-100 border-b border-slate-200' ?> flex items-center justify-between">
                 <div class="flex items-center space-x-2">
                     <span class="w-3 h-3 rounded-full <?= ($item['status'] === 'reached') ? 'bg-emerald-500' : 'bg-slate-400' ?>"></span>
-                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">Images at Product Reached (New Office)</h3>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">Images at Product Reached (Dubai Design District)</h3>
                 </div>
                 <span class="text-xs font-semibold px-2 py-0.5 <?= ($item['status'] === 'reached') ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600' ?> rounded-full">
                     <?= count($reachedImages) ?> photo<?= count($reachedImages) !== 1 ? 's' : '' ?>
@@ -341,7 +341,7 @@ require_once __DIR__ . '/header.php';
                 <?php else: ?>
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         <?php foreach ($reachedImages as $img): ?>
-                            <div class="relative group rounded-xl overflow-hidden aspect-square border border-emerald-200 shadow-sm bg-slate-100 cursor-pointer" onclick="openLightbox('<?= htmlspecialchars($img['image_path']) ?>', '<?= htmlspecialchars($item['brand'] . ' ' . $item['model'] . ' - New Office Arrival Stage') ?>')">
+                            <div class="relative group rounded-xl overflow-hidden aspect-square border border-emerald-200 shadow-sm bg-slate-100 cursor-pointer" onclick="openLightbox('<?= htmlspecialchars($img['image_path']) ?>', '<?= htmlspecialchars($item['brand'] . ' ' . $item['model'] . ' - Dubai Design District Arrival Stage') ?>')">
                                 <img src="<?= htmlspecialchars($img['image_path']) ?>" class="w-full h-full object-cover img-zoom-hover">
                                 <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-sm transition-opacity">
                                     <i class="fa-solid fa-magnifying-glass-plus"></i>
@@ -408,13 +408,15 @@ require_once __DIR__ . '/header.php';
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Received By</label>
-                    <input type="text" name="reached_by" required value="Staff" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    <select name="reached_by" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white font-medium">
+                        <?= render_receiver_options($item['reached_by']) ?>
+                    </select>
                 </div>
             </div>
 
             <div>
-                <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">New Office Room / Desk Location</label>
-                <input type="text" name="new_location" value="<?= htmlspecialchars($item['new_location']) ?>" placeholder="e.g. 4th Floor Tech Bay Desk 12" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Dubai Design District Room / Desk Location</label>
+                <input type="text" name="new_location" value="<?= htmlspecialchars($item['new_location']) ?>" placeholder="e.g. Building 4, Tech Bay Desk 12" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
             </div>
 
             <div>
@@ -555,8 +557,8 @@ extraPhotoModule.updateHiddenInput = function() {
 function openAddPhotosModal(stage) {
     document.getElementById('targetStageInput').value = stage;
     document.getElementById('addPhotosModalTitle').textContent = (stage === 'reached_office') 
-        ? 'Add Photos to Arrival Stage (New Office)' 
-        : 'Add Photos to Packing Stage (Old Office)';
+        ? 'Add Photos to Arrival Stage (Dubai Design District)' 
+        : 'Add Photos to Packing Stage (Hamdan Sports Complex)';
     const modal = document.getElementById('addPhotosModal');
     modal.classList.remove('hidden');
     modal.classList.add('flex');

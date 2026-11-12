@@ -89,9 +89,9 @@ async function handleGlobalBarcodeDetected(barcode) {
                             <div><strong>Barcode ID:</strong> <code class="bg-emerald-100 text-emerald-800 px-1 py-0.5 rounded font-bold">${itemBc}</code></div>
                             <div><strong>Serial Number (S/N):</strong> <span class="font-mono text-slate-700">${itemSn}</span></div>
                             <div><strong>Status:</strong> <span class="capitalize font-semibold text-amber-600">${result.item.status}</span></div>
-                            <div><strong>Destination:</strong> ${result.item.new_location || 'New Office'}</div>
+                            <div><strong>Destination:</strong> ${result.item.new_location || 'Dubai Design District'}</div>
                         </div>
-                        <p class="text-xs text-slate-500">Would you like to mark this item as reached at the new office or view full details?</p>
+                        <p class="text-xs text-slate-500">Would you like to mark this item as reached at Dubai Design District or view full details?</p>
                     `,
                     showCancelButton: true,
                     confirmButtonText: '<i class="fa-solid fa-clipboard-check mr-1"></i> Mark as Arrived',
@@ -114,7 +114,7 @@ async function handleGlobalBarcodeDetected(barcode) {
                         <div class="text-left text-sm bg-slate-50 p-3 rounded-lg border border-slate-200 mb-3 space-y-1">
                             <div><strong>Barcode ID:</strong> <code class="bg-emerald-100 text-emerald-800 px-1 py-0.5 rounded font-bold">${itemBc}</code></div>
                             <div><strong>S/N:</strong> <span class="font-mono">${itemSn}</span></div>
-                            <div class="text-emerald-700 font-semibold"><i class="fa-solid fa-circle-check mr-1"></i> Arrived at New Office</div>
+                            <div class="text-emerald-700 font-semibold"><i class="fa-solid fa-circle-check mr-1"></i> Arrived at Dubai Design District</div>
                         </div>
                     `,
                     confirmButtonText: 'View Item Details',

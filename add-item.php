@@ -100,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 // Log Activity
-                log_activity($itemId, 'Item Packed', "Registered item {$brand} {$model} (Barcode ID: {$barcodeId}, S/N: {$serialNumber}) at Old Office with {$savedImagesCount} photo(s).");
+                log_activity($itemId, 'Item Packed', "Registered item {$brand} {$model} (Barcode ID: {$barcodeId}, S/N: {$serialNumber}) at Hamdan Sports Complex with {$savedImagesCount} photo(s).");
 
                 header("Location: view.php?id={$itemId}&msg=" . urlencode("Item {$brand} {$model} registered successfully with {$savedImagesCount} photo(s)!"));
                 exit;
@@ -121,7 +121,7 @@ require_once __DIR__ . '/header.php';
     <i class="fa-solid fa-chevron-right text-[10px]"></i>
     <a href="items.php" class="hover:text-sky-600">Inventory</a>
     <i class="fa-solid fa-chevron-right text-[10px]"></i>
-    <span class="text-slate-800 font-semibold">Pack New Item (Old Office)</span>
+    <span class="text-slate-800 font-semibold">Pack New Item (Hamdan Sports Complex)</span>
 </div>
 
 <div class="max-w-4xl mx-auto">
@@ -132,13 +132,13 @@ require_once __DIR__ . '/header.php';
             <div>
                 <h2 class="text-xl font-bold flex items-center">
                     <i class="fa-solid fa-boxes-packing mr-2.5 text-sky-400"></i>
-                    Register & Pack Item at Old Office
+                    Register & Pack Item at Hamdan Sports Complex
                 </h2>
                 <p class="text-xs text-slate-300 mt-1">Capture product photos and scan barcode/serial number before shifting.</p>
             </div>
             <div class="flex items-center space-x-2">
                 <span class="px-2.5 py-1 bg-amber-500/20 text-amber-300 border border-amber-400/30 rounded-lg text-xs font-semibold uppercase tracking-wider">
-                    Stage 1: Old Office
+                    Stage 1: Hamdan Sports Complex
                 </span>
             </div>
         </div>
@@ -264,17 +264,17 @@ require_once __DIR__ . '/header.php';
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Old Office Location</label>
-                        <input type="text" name="old_location" placeholder="e.g. 2nd Floor, IT Room, Desk 04" value="<?= htmlspecialchars($_POST['old_location'] ?? '') ?>" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Hamdan Sports Complex Location</label>
+                        <input type="text" name="old_location" placeholder="e.g. Ground Floor, Sports Hall, Desk 04" value="<?= htmlspecialchars($_POST['old_location'] ?? '') ?>" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">New Office Destination</label>
-                        <input type="text" name="new_location" placeholder="e.g. 4th Floor, Tech Hub, Desk 12" value="<?= htmlspecialchars($_POST['new_location'] ?? '') ?>" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Dubai Design District Destination</label>
+                        <input type="text" name="new_location" placeholder="e.g. Building 4, Tech Hub, Desk 12" value="<?= htmlspecialchars($_POST['new_location'] ?? '') ?>" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
                     </div>
 
                     <div class="sm:col-span-2">
-                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Condition & Packing Remarks (Old Office)</label>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Condition & Packing Remarks (Hamdan Sports Complex)</label>
                         <textarea name="old_condition" rows="2" placeholder="Note physical condition, existing cosmetic marks, included cables, adapters, or accessories in the box..." class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"><?= htmlspecialchars($_POST['old_condition'] ?? '') ?></textarea>
                     </div>
                 </div>
@@ -282,12 +282,12 @@ require_once __DIR__ . '/header.php';
 
             <hr class="border-slate-100">
 
-            <!-- Section 3: Old Office Photos with Inbuilt Camera & Multi-upload -->
+            <!-- Section 3: Hamdan Sports Complex Photos with Inbuilt Camera & Multi-upload -->
             <div>
                 <div class="flex items-center justify-between mb-2">
                     <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center">
                         <span class="w-6 h-6 rounded-full bg-sky-100 text-sky-600 inline-flex items-center justify-center text-xs mr-2">3</span>
-                        Photos at Old Office (Upload Multiple)
+                        Photos at Hamdan Sports Complex (Upload Multiple)
                     </h3>
                     <span class="text-xs text-sky-600 font-semibold flex items-center">
                         <i class="fa-solid fa-camera mr-1"></i> Live Camera Ready
@@ -362,7 +362,7 @@ require_once __DIR__ . '/header.php';
         <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-camera text-sky-400"></i>
-                <h3 class="font-bold text-sm sm:text-base">Camera: Capture Old Office Photos</h3>
+                <h3 class="font-bold text-sm sm:text-base">Camera: Capture Hamdan Sports Complex Photos</h3>
             </div>
             <button type="button" onclick="closeItemCamera()" class="text-slate-400 hover:text-white p-1 rounded-lg">
                 <i class="fa-solid fa-xmark text-lg"></i>

@@ -31,7 +31,7 @@ $stmt = $db->prepare("SELECT * FROM items $whereSql ORDER BY (status = 'reached'
 $stmt->execute($params);
 $items = $stmt->fetchAll();
 
-// Pre-load all old office photos in one single query for maximum performance
+// Pre-load all Hamdan Sports Complex photos in one single query for maximum performance
 $allOldPhotosQuery = $db->query("SELECT * FROM item_images WHERE stage = 'old_office' ORDER BY id ASC")->fetchAll();
 $photosMap = [];
 foreach ($allOldPhotosQuery as $ph) {
@@ -66,7 +66,7 @@ require_once __DIR__ . '/header.php';
         <span class="text-slate-800 font-semibold">Product Reached Checklist</span>
     </div>
     <span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-        Stage 2: New Office Arrival Verification
+        Stage 2: Dubai Design District Arrival Verification
     </span>
 </div>
 
@@ -91,7 +91,7 @@ require_once __DIR__ . '/header.php';
             </div>
             <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Product Reached Checklist</h1>
             <p class="text-xs sm:text-sm text-emerald-100/80 mt-1 max-w-xl">
-                Tick items as they arrive at the new office. Capture fresh arrival photos with your camera to confirm condition and complete the relocation log.
+                Tick items as they arrive at Dubai Design District. Capture fresh arrival photos with your camera to confirm condition and complete the relocation log.
             </p>
         </div>
 
@@ -167,7 +167,7 @@ require_once __DIR__ . '/header.php';
             <i class="fa-solid fa-clipboard-check text-5xl mb-3 text-slate-300"></i>
             <p class="text-base font-semibold text-slate-600">No items match this checklist filter.</p>
             <p class="text-xs text-slate-400 mt-1">
-                <?= ($filter === 'pending') ? 'All registered items have reached the new office!' : 'Try selecting another tab or packing new items.' ?>
+                <?= ($filter === 'pending') ? 'All registered items have reached Dubai Design District!' : 'Try selecting another tab or packing new items.' ?>
             </p>
         </div>
     <?php else: ?>
@@ -195,14 +195,14 @@ require_once __DIR__ . '/header.php';
                             <?php endif; ?>
                         </div>
 
-                        <!-- Old Office Thumbnail (if available) -->
+                        <!-- Hamdan Sports Complex Thumbnail (if available) -->
                         <?php if (!empty($oldPhotos)): ?>
-                            <div class="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 flex-shrink-0 cursor-pointer group relative shadow-sm" onclick="openLightbox('<?= htmlspecialchars($oldPhotos[0]['image_path']) ?>', '<?= htmlspecialchars($item['brand'] . ' ' . $item['model'] . ' - Old Office Photo') ?>')">
+                            <div class="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 flex-shrink-0 cursor-pointer group relative shadow-sm" onclick="openLightbox('<?= htmlspecialchars($oldPhotos[0]['image_path']) ?>', '<?= htmlspecialchars($item['brand'] . ' ' . $item['model'] . ' - Hamdan Sports Complex Photo') ?>')">
                                 <img src="<?= htmlspecialchars($oldPhotos[0]['image_path']) ?>" class="w-full h-full object-cover group-hover:scale-110 transition-transform">
                                 <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs transition-opacity">
                                     <i class="fa-solid fa-eye"></i>
                                 </div>
-                                <span class="absolute bottom-0 inset-x-0 bg-black/60 text-[8px] text-white text-center py-0.2">Old</span>
+                                <span class="absolute bottom-0 inset-x-0 bg-black/60 text-[8px] text-white text-center py-0.2">HSC</span>
                             </div>
                         <?php else: ?>
                             <div class="w-14 h-14 rounded-xl bg-slate-100 border border-slate-200 flex-shrink-0 flex items-center justify-center text-slate-400 text-lg">
@@ -216,7 +216,7 @@ require_once __DIR__ . '/header.php';
                                 <h4 class="font-bold text-slate-900 text-sm sm:text-base"><?= htmlspecialchars($item['brand']) ?> <?= htmlspecialchars($item['model']) ?></h4>
                                 <?php if ($isReached): ?>
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
-                                        <i class="fa-solid fa-check-circle mr-1"></i> Arrived at New Office
+                                        <i class="fa-solid fa-check-circle mr-1"></i> Arrived at Dubai Design District
                                     </span>
                                 <?php else: ?>
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
@@ -230,7 +230,7 @@ require_once __DIR__ . '/header.php';
                                 <?php if (!empty($item['serial_number'])): ?>
                                     <span><i class="fa-solid fa-hashtag text-slate-400 mr-1"></i> S/N: <strong class="text-slate-700 font-mono"><?= htmlspecialchars($item['serial_number']) ?></strong></span>
                                 <?php endif; ?>
-                                <span><i class="fa-solid fa-location-dot text-emerald-600 mr-1"></i> Destination: <strong class="text-slate-700"><?= htmlspecialchars($item['new_location'] ?: 'New Office') ?></strong></span>
+                                <span><i class="fa-solid fa-location-dot text-emerald-600 mr-1"></i> Destination: <strong class="text-slate-700"><?= htmlspecialchars($item['new_location'] ?: 'Dubai Design District') ?></strong></span>
                                 <span><i class="fa-solid fa-layer-group text-slate-400 mr-1"></i> <?= htmlspecialchars($item['category']) ?></span>
                             </div>
 
@@ -281,7 +281,7 @@ require_once __DIR__ . '/header.php';
                 <i class="fa-solid fa-clipboard-check text-emerald-400 text-lg"></i>
                 <div>
                     <h3 class="font-bold text-base leading-tight">Product Arrival Verification</h3>
-                    <p class="text-[11px] text-emerald-200">Confirm item reached New Office & capture photos</p>
+                    <p class="text-[11px] text-emerald-200">Confirm item reached Dubai Design District & capture photos</p>
                 </div>
             </div>
             <button type="button" onclick="closeArrivalModal()" class="text-emerald-200 hover:text-white p-1 rounded-lg">
@@ -297,7 +297,7 @@ require_once __DIR__ . '/header.php';
             <input type="hidden" name="serial_number" id="modalItemSerial" value="">
             <input type="hidden" name="camera_images" id="arrivalCameraImages" value="[]">
 
-            <!-- Item Reference Card (Shows Old Office comparison thumbnail) -->
+            <!-- Item Reference Card (Shows Hamdan Sports Complex comparison thumbnail) -->
             <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-3">
                 <div id="modalOldPhotoThumb" class="w-14 h-14 rounded-lg bg-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center text-slate-400 text-sm">
                     <i class="fa-solid fa-box"></i>
@@ -325,14 +325,18 @@ require_once __DIR__ . '/header.php';
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Received & Verified By</label>
-                    <input type="text" name="reached_by" id="modalReceivedBy" required value="Staff" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    <select name="reached_by" id="modalReceivedBy" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white font-medium">
+                        <option value="Maulik Dawda" selected>Maulik Dawda</option>
+                        <option value="Abdur Rehman">Abdur Rehman</option>
+                        <option value="Arshad Khan">Arshad Khan</option>
+                    </select>
                 </div>
             </div>
 
             <!-- New Destination Location Update -->
             <div>
-                <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Assigned Desk / Room in New Office</label>
-                <input type="text" name="new_location" id="modalNewLocationInput" placeholder="e.g. Floor 4, IT Bay Desk 12" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Assigned Desk / Room in Dubai Design District</label>
+                <input type="text" name="new_location" id="modalNewLocationInput" placeholder="e.g. Building 4, IT Bay Desk 12" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
             </div>
 
             <!-- Remarks / Arrival Notes -->
@@ -348,7 +352,7 @@ require_once __DIR__ . '/header.php';
                 <div class="flex items-center justify-between mb-2">
                     <label class="block text-xs font-bold text-slate-900 uppercase tracking-wider">
                         <i class="fa-solid fa-camera mr-1 text-emerald-600"></i>
-                        Capture Arrival Photos at New Office
+                        Capture Arrival Photos at Dubai Design District
                     </label>
                     <span class="text-[11px] text-emerald-700 font-semibold">Proof of condition</span>
                 </div>
@@ -410,7 +414,7 @@ require_once __DIR__ . '/header.php';
         <div class="px-5 py-3.5 bg-emerald-900 text-white flex items-center justify-between">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-camera text-emerald-400"></i>
-                <h3 class="font-bold text-sm sm:text-base">Camera: Snap New Office Arrival Photo</h3>
+                <h3 class="font-bold text-sm sm:text-base">Camera: Snap Dubai Design District Arrival Photo</h3>
             </div>
             <button type="button" onclick="closeArrivalLiveCamera()" class="text-emerald-200 hover:text-white p-1 rounded-lg">
                 <i class="fa-solid fa-xmark text-lg"></i>
@@ -591,7 +595,7 @@ function openArrivalModalDirect(item, oldPhotos = []) {
     document.getElementById('modalItemTitle').textContent = `${item.brand} ${item.model}`;
     document.getElementById('modalItemBarcodeDisplay').textContent = item.barcode_id || item.serial_number || '(none)';
     document.getElementById('modalItemSerialDisplay').textContent = item.serial_number || 'N/A';
-    document.getElementById('modalItemDestDisplay').textContent = item.new_location || 'New Office';
+    document.getElementById('modalItemDestDisplay').textContent = item.new_location || 'Dubai Design District';
     document.getElementById('modalNewLocationInput').value = item.new_location || '';
     
     if (item.reached_condition) {
@@ -599,16 +603,21 @@ function openArrivalModalDirect(item, oldPhotos = []) {
     } else {
         document.getElementById('modalCondition').value = 'perfect';
     }
+    if (item.reached_by) {
+        document.getElementById('modalReceivedBy').value = item.reached_by;
+    } else {
+        document.getElementById('modalReceivedBy').value = 'Maulik Dawda';
+    }
     if (item.reached_notes) {
         document.getElementById('modalNotes').value = item.reached_notes;
     } else {
         document.getElementById('modalNotes').value = '';
     }
 
-    // Set old office photo thumbnail for verification reference
+    // Set Hamdan Sports Complex photo thumbnail for verification reference
     const thumbBox = document.getElementById('modalOldPhotoThumb');
     if (oldPhotos && oldPhotos.length > 0 && oldPhotos[0].image_path) {
-        thumbBox.innerHTML = `<img src="${oldPhotos[0].image_path}" class="w-full h-full object-cover rounded-lg" title="Old Office Photo">`;
+        thumbBox.innerHTML = `<img src="${oldPhotos[0].image_path}" class="w-full h-full object-cover rounded-lg" title="Hamdan Sports Complex Photo">`;
     } else {
         thumbBox.innerHTML = '<i class="fa-solid fa-box text-slate-400"></i>';
     }

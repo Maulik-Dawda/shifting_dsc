@@ -1,0 +1,50 @@
+/* assets/css/custom.css */
+@layer utilities {
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Scanner target box animation */
+.scan-laser {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #0284c7;
+    box-shadow: 0 0 10px #0284c7, 0 0 20px #0284c7;
+    animation: laserScan 2.5s infinite ease-in-out;
+}
+
+@keyframes laserScan {
+    0% { top: 10%; opacity: 0.2; }
+    50% { top: 90%; opacity: 1; }
+    100% { top: 10%; opacity: 0.2; }
+}
+
+/* Image zoom hover effect */
+.img-zoom-hover {
+    transition: transform 0.2s ease-in-out;
+}
+.img-zoom-hover:hover {
+    transform: scale(1.03);
+}

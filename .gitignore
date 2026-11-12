@@ -1,0 +1,17 @@
+# Ignore uploaded large photo binaries from git if needed, but keep folder structure
+uploads/old_office/*
+!uploads/old_office/.gitkeep
+uploads/reached_office/*
+!uploads/reached_office/.gitkeep
+
+# Ignore sqlite runtime DB
+data/*.db
+data/*.db-journal
+!data/.gitkeep
+
+# OS and IDE files
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/

@@ -10,7 +10,7 @@
             <div class="flex items-center space-x-6 text-xs text-slate-400">
                 <span><i class="fa-solid fa-camera mr-1"></i> Inbuilt Camera</span>
                 <span><i class="fa-solid fa-barcode mr-1"></i> Barcode Scanner</span>
-                <span><i class="fa-solid fa-database mr-1"></i> <?= (DB_DRIVER === 'sqlite') ? 'SQLite Storage' : 'MySQL Connected' ?></span>
+                <span><i class="fa-solid fa-database mr-1"></i> <?= (DB_DRIVER === 'sqlite') ? 'SQLite Storage' : 'MySQL Database: ' . htmlspecialchars(DB_NAME ?: 'Hostinger') ?></span>
             </div>
         </div>
     </footer>

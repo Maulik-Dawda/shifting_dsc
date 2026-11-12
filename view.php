@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     if (!empty($_POST['camera_images'])) {
         $camPhotos = json_decode($_POST['camera_images'], true);
         if (is_array($camPhotos)) {
-            $insStmt = $db->prepare("INSERT INTO item_images (item_id, stage, image_path) VALUES (:item_id, :stage, :image_path)");
+            $insStmt = $db->prepare("INSERT INTO item_images (item_id, stage, image_path, created_at) VALUES (:item_id, :stage, :image_path, :created_at)");
             foreach ($camPhotos as $b64) {
                 if (!empty($b64)) {
                     $savedPath = save_base64_image($b64, $targetStage);
@@ -44,7 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                         $insStmt->execute([
                             ':item_id' => $id,
                             ':stage' => $targetStage,
-                            ':image_path' => $savedPath
+                            ':image_path' => $savedPath,
+                            ':created_at' => date('Y-m-d H:i:s')
                         ]);
                         $addedCount++;
                     }
@@ -55,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
     // 2. File Uploads
     if (isset($_FILES['extra_photos']) && is_array($_FILES['extra_photos']['name'])) {
-        $insStmt = $db->prepare("INSERT INTO item_images (item_id, stage, image_path) VALUES (:item_id, :stage, :image_path)");
+        $insStmt = $db->prepare("INSERT INTO item_images (item_id, stage, image_path, created_at) VALUES (:item_id, :stage, :image_path, :created_at)");
         $fileCount = count($_FILES['extra_photos']['name']);
         for ($i = 0; $i < $fileCount; $i++) {
             if (!empty($_FILES['extra_photos']['tmp_name'][$i])) {
@@ -71,7 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     $insStmt->execute([
                         ':item_id' => $id,
                         ':stage' => $targetStage,
-                        ':image_path' => $savedPath
+                        ':image_path' => $savedPath,
+                        ':created_at' => date('Y-m-d H:i:s')
                     ]);
                     $addedCount++;
                 }
@@ -104,10 +106,10 @@ require_once __DIR__ . '/header.php';
             <span>Print Relocation Tag</span>
         </button>
         <?php if ($item['status'] !== 'reached'): ?>
-            <a href="reached.php?scan=<?= urlencode($item['serial_number']) ?>" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm flex items-center space-x-1">
+            <button type="button" onclick="openViewArrivalModal()" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm flex items-center space-x-1.5">
                 <i class="fa-solid fa-clipboard-check"></i>
                 <span>Mark as Reached</span>
-            </a>
+            </button>
         <?php endif; ?>
         <a href="edit-item.php?id=<?= $item['id'] ?>" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold">
             <i class="fa-solid fa-pen-to-square mr-1"></i> Edit
@@ -313,7 +315,7 @@ require_once __DIR__ . '/header.php';
                 <?php if ($item['status'] === 'reached'): ?>
                     <?= nl2br(htmlspecialchars($item['reached_notes'] ?: 'Item verified and reached in good condition.')) ?>
                 <?php else: ?>
-                    <span class="italic text-slate-400">Item has not reached yet. Go to <a href="reached.php?scan=<?= urlencode($item['serial_number']) ?>" class="text-emerald-600 font-bold underline">Checklist</a> to mark arrived.</span>
+                    <span class="italic text-slate-400">Item has not reached yet. Click "Mark as Reached" above to verify.</span>
                 <?php endif; ?>
             </div>
 
@@ -324,9 +326,9 @@ require_once __DIR__ . '/header.php';
                         <i class="fa-solid fa-camera text-4xl mb-2 text-slate-300"></i>
                         <p class="text-xs font-semibold">No arrival photos recorded yet.</p>
                         <?php if ($item['status'] !== 'reached'): ?>
-                            <a href="reached.php?scan=<?= urlencode($item['serial_number']) ?>" class="inline-block mt-3 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold">
-                                Mark as Reached & Snap Photos
-                            </a>
+                            <button type="button" onclick="openViewArrivalModal()" class="inline-block mt-3 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow">
+                                <i class="fa-solid fa-camera mr-1"></i> Mark as Reached & Snap Photos
+                            </button>
                         <?php endif; ?>
                     </div>
                 <?php else: ?>
@@ -359,6 +361,81 @@ require_once __DIR__ . '/header.php';
             </div>
         </div>
 
+    </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- ARRIVAL VERIFICATION MODAL ON VIEW PAGE                 -->
+<!-- ======================================================= -->
+<div id="viewArrivalModal" class="fixed inset-0 z-50 bg-slate-900/85 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden border border-slate-200 flex flex-col relative my-8">
+        <div class="px-6 py-4 bg-gradient-to-r from-emerald-800 to-teal-900 text-white flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-clipboard-check text-emerald-400 text-lg"></i>
+                <div>
+                    <h3 class="font-bold text-base leading-tight">Product Arrival Verification</h3>
+                    <p class="text-[11px] text-emerald-200"><?= htmlspecialchars($item['brand'] . ' ' . $item['model']) ?> (S/N: <?= htmlspecialchars($item['serial_number']) ?>)</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeViewArrivalModal()" class="text-emerald-200 hover:text-white p-1 rounded-lg">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <form id="viewArrivalForm" action="api/mark-reached.php" method="POST" enctype="multipart/form-data" class="p-6 space-y-5">
+            <input type="hidden" name="is_ajax" value="1">
+            <input type="hidden" name="item_id" value="<?= $item['id'] ?>">
+            <input type="hidden" name="serial_number" value="<?= htmlspecialchars($item['serial_number']) ?>">
+            <input type="hidden" name="camera_images" id="viewArrivalCameraImages" value="[]">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Arrival Physical Condition</label>
+                    <select name="reached_condition" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
+                        <option value="perfect" selected>✨ Intact / Perfect Condition</option>
+                        <option value="minor_damage">⚠️ Minor Scratches / Cosmetic</option>
+                        <option value="damaged">❌ Damaged in Transit</option>
+                        <option value="missing_parts">❓ Missing Cables / Accessories</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Received By</label>
+                    <input type="text" name="reached_by" required value="Staff" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">New Office Room / Desk Location</label>
+                <input type="text" name="new_location" value="<?= htmlspecialchars($item['new_location']) ?>" placeholder="e.g. 4th Floor Tech Bay Desk 12" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Arrival Remarks</label>
+                <textarea name="reached_notes" rows="2" placeholder="Unpacked, tested power on, cables verified..." class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"></textarea>
+            </div>
+
+            <div class="border-t border-slate-200 pt-4">
+                <label class="block text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">Capture Arrival Photos</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <button type="button" onclick="openExtraCamera('reached_office')" class="p-3 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-xl text-center flex flex-col items-center justify-center">
+                        <i class="fa-solid fa-camera text-emerald-600 text-lg mb-1"></i>
+                        <span class="text-xs font-bold text-slate-900">Inbuilt Camera</span>
+                    </button>
+                    <div class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-300 rounded-xl text-center relative flex flex-col items-center justify-center">
+                        <i class="fa-solid fa-camera-retro text-slate-600 text-lg mb-1"></i>
+                        <span class="text-xs font-bold text-slate-900">Device Camera / Files</span>
+                        <input type="file" name="arrival_photos[]" multiple accept="image/*" capture="environment" class="absolute inset-0 opacity-0 cursor-pointer">
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-200 flex justify-end gap-3">
+                <button type="button" onclick="closeViewArrivalModal()" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl text-xs font-semibold">Cancel</button>
+                <button type="submit" id="viewArrivalSubmitBtn" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md">
+                    Confirm Product Reached
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -434,7 +511,7 @@ require_once __DIR__ . '/header.php';
         <div class="p-3 bg-white border-t border-slate-200 max-h-32 overflow-y-auto" id="extraCameraThumbnails"></div>
         <div class="px-5 py-3 bg-slate-50 border-t border-slate-200 flex justify-end">
             <button type="button" onclick="closeExtraCamera()" class="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-semibold">
-                Done
+                Done & Attach
             </button>
         </div>
     </div>
@@ -483,12 +560,73 @@ function closeAddPhotosModal() {
     modal.classList.add('hidden');
 }
 
-function openExtraCamera() {
+function openExtraCamera(stage = null) {
+    if (stage === 'reached_office') {
+        extraPhotoModule.hiddenInputId = 'viewArrivalCameraImages';
+    } else {
+        extraPhotoModule.hiddenInputId = 'extraCameraImages';
+    }
     extraPhotoModule.open();
 }
 function closeExtraCamera() {
     extraPhotoModule.close();
 }
+
+// View Page Arrival Modal
+function openViewArrivalModal() {
+    const modal = document.getElementById('viewArrivalModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+function closeViewArrivalModal() {
+    const modal = document.getElementById('viewArrivalModal');
+    modal.classList.remove('flex');
+    modal.classList.add('hidden');
+}
+
+// Handle View Arrival Form Submission via AJAX
+document.addEventListener('DOMContentLoaded', () => {
+    const vForm = document.getElementById('viewArrivalForm');
+    if (vForm) {
+        vForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('viewArrivalSubmitBtn');
+            const orig = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...';
+
+            try {
+                const formData = new FormData(vForm);
+                formData.set('is_ajax', '1');
+                
+                const fileInput = vForm.querySelector('input[type="file"][name="arrival_photos[]"]');
+                if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                    formData.delete('arrival_photos[]');
+                    for (const f of fileInput.files) {
+                        const compressed = await compressImageFile(f, 1280, 0.82);
+                        formData.append('arrival_photos[]', compressed, compressed.name);
+                    }
+                }
+
+                const resp = await fetch('api/mark-reached.php', { method: 'POST', body: formData, headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                const res = await resp.json();
+
+                if (res.success) {
+                    closeViewArrivalModal();
+                    Swal.fire({ icon: 'success', title: 'Product Reached!', text: res.message, timer: 1800, showConfirmButton: false });
+                    setTimeout(() => window.location.reload(), 1200);
+                } else {
+                    Swal.fire('Error', res.message || 'Could not update item.', 'error');
+                }
+            } catch(e) {
+                vForm.submit();
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = orig;
+            }
+        });
+    }
+});
 </script>
 
 <?php require_once __DIR__ . '/footer.php'; ?>

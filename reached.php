@@ -30,15 +30,23 @@ $stmt = $db->prepare("SELECT * FROM items $whereSql ORDER BY (status = 'reached'
 $stmt->execute($params);
 $items = $stmt->fetchAll();
 
-// Pre-load items map and photos map for safe JavaScript rendering (no broken quotes in HTML attributes!)
-$itemsMap = [];
+// Pre-load all old office photos in one single query for maximum performance
+$allOldPhotosQuery = $db->query("SELECT * FROM item_images WHERE stage = 'old_office' ORDER BY id ASC")->fetchAll();
 $photosMap = [];
+foreach ($allOldPhotosQuery as $ph) {
+    $photosMap[$ph['item_id']][] = $ph;
+}
 
+// Pre-load all reached photos
+$allReachedPhotosQuery = $db->query("SELECT * FROM item_images WHERE stage = 'reached_office' ORDER BY id ASC")->fetchAll();
+$reachedPhotosMap = [];
+foreach ($allReachedPhotosQuery as $ph) {
+    $reachedPhotosMap[$ph['item_id']][] = $ph;
+}
+
+$itemsMap = [];
 foreach ($items as $it) {
     $itemsMap[$it['id']] = $it;
-    $pStmt = $db->prepare("SELECT * FROM item_images WHERE item_id = :id AND stage = 'old_office'");
-    $pStmt->execute([':id' => $it['id']]);
-    $photosMap[$it['id']] = $pStmt->fetchAll();
 }
 
 // Counts for filter tabs
@@ -162,18 +170,14 @@ require_once __DIR__ . '/header.php';
             </p>
         </div>
     <?php else: ?>
-        <div class="divide-y divide-slate-100">
+        <div class="divide-y divide-slate-100" id="checklistContainer">
             <?php foreach ($items as $item): ?>
                 <?php
                     $isReached = ($item['status'] === 'reached');
                     $oldPhotos = $photosMap[$item['id']] ?? [];
-
-                    // Fetch Reached Office images if already reached
-                    $reachedPhotosStmt = $db->prepare("SELECT * FROM item_images WHERE item_id = :id AND stage = 'reached_office'");
-                    $reachedPhotosStmt->execute([':id' => $item['id']]);
-                    $reachedPhotos = $reachedPhotosStmt->fetchAll();
+                    $reachedPhotos = $reachedPhotosMap[$item['id']] ?? [];
                 ?>
-                <div class="p-4 sm:p-5 hover:bg-slate-50/80 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 <?= $isReached ? 'bg-emerald-50/30' : '' ?>">
+                <div id="itemRow_<?= $item['id'] ?>" class="p-4 sm:p-5 hover:bg-slate-50/80 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 <?= $isReached ? 'bg-emerald-50/30' : '' ?>">
                     
                     <!-- Left: Checkbox & Product Details -->
                     <div class="flex items-start space-x-4 min-w-0 flex-grow">
@@ -281,8 +285,9 @@ require_once __DIR__ . '/header.php';
             </button>
         </div>
 
-        <form action="api/mark-reached.php" method="POST" enctype="multipart/form-data" class="p-6 space-y-5">
+        <form id="arrivalForm" action="api/mark-reached.php" method="POST" enctype="multipart/form-data" class="p-6 space-y-5">
             <!-- Hidden Fields -->
+            <input type="hidden" name="is_ajax" value="1">
             <input type="hidden" name="item_id" id="modalItemId" value="">
             <input type="hidden" name="serial_number" id="modalItemSerial" value="">
             <input type="hidden" name="camera_images" id="arrivalCameraImages" value="[]">
@@ -314,7 +319,7 @@ require_once __DIR__ . '/header.php';
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Received & Verified By</label>
-                    <input type="text" name="reached_by" id="modalReceivedBy" required value="Maulik Dawda" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    <input type="text" name="reached_by" id="modalReceivedBy" required value="Staff" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                 </div>
             </div>
 
@@ -357,11 +362,11 @@ require_once __DIR__ . '/header.php';
                     <!-- File Upload Input with Native Camera Support -->
                     <div class="p-3 bg-slate-50 hover:bg-slate-100 border-2 border-dashed border-slate-300 rounded-xl text-center relative flex flex-col items-center justify-center">
                         <div class="w-10 h-10 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-lg mb-1">
-                            <i class="fa-solid fa-upload"></i>
+                            <i class="fa-solid fa-camera-retro"></i>
                         </div>
                         <span class="font-bold text-xs text-slate-900">Device Camera / Gallery</span>
-                        <span class="text-[11px] text-slate-500">Upload or snap on mobile</span>
-                        <input type="file" name="arrival_photos[]" multiple accept="image/*" capture="environment" onchange="previewArrivalUploadedFiles(this)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                        <span class="text-[11px] text-slate-500">Snap on phone or upload</span>
+                        <input type="file" name="arrival_photos[]" id="arrivalPhotosInput" multiple accept="image/*" capture="environment" onchange="previewArrivalUploadedFiles(this)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
                     </div>
                 </div>
 
@@ -379,7 +384,7 @@ require_once __DIR__ . '/header.php';
                 <button type="button" onclick="closeArrivalModal()" class="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-semibold">
                     Cancel
                 </button>
-                <button type="submit" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-emerald-600/30 flex items-center space-x-1.5 transition-all hover:-translate-y-0.5">
+                <button type="submit" id="arrivalSubmitBtn" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-emerald-600/30 flex items-center space-x-1.5 transition-all hover:-translate-y-0.5">
                     <i class="fa-solid fa-check"></i>
                     <span>Confirm Product Reached</span>
                 </button>
@@ -477,9 +482,9 @@ require_once __DIR__ . '/header.php';
 </div>
 
 <script>
-// Preloaded data from PHP (clean, secure JSON with hex encoding)
-const allItemsMap = <?= json_encode($itemsMap, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
-const allPhotosMap = <?= json_encode($photosMap, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+// Preloaded data from PHP (enforced as JS objects for safe numeric key lookup)
+const allItemsMap = <?= json_encode((object)$itemsMap, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+const allPhotosMap = <?= json_encode((object)$photosMap, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 
 // Arrival Camera Instance
 const arrivalPhotoModule = new PhotoCaptureModule({
@@ -534,10 +539,9 @@ const arrivalBarcodeScanner = new BarcodeScannerModule({
             const resp = await fetch(`api/scan-lookup.php?sn=${encodeURIComponent(scannedSerial)}`);
             const data = await resp.json();
             if (data.success && data.item) {
-                // If in allItemsMap, use id; otherwise open directly
-                openArrivalModalDirect(data.item, data.item.old_images.map(p => ({ image_path: p })));
+                openArrivalModalDirect(data.item, (data.item.old_images || []).map(p => ({ image_path: p })));
             } else {
-                Swal.fire('Not Found', `Item with S/N ${scannedSerial} was not found.`, 'warning');
+                Swal.fire('Not Found', `Item with S/N "${scannedSerial}" was not found in inventory.`, 'warning');
             }
         } catch (e) {
             Swal.fire('Error', 'Failed to lookup item: ' + e.message, 'error');
@@ -552,11 +556,21 @@ function closeArrivalBarcodeScanner() {
     arrivalBarcodeScanner.close();
 }
 
-// Open Arrival Modal by Item ID (Reliable, no broken HTML quotes)
+// Open Arrival Modal by Item ID
 function openArrivalModal(itemId) {
     const item = allItemsMap[itemId];
     if (!item) {
-        Swal.fire('Error', 'Item data not found.', 'error');
+        // Fallback fetch if not in current map
+        fetch(`api/scan-lookup.php?id=${encodeURIComponent(itemId)}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.item) {
+                    openArrivalModalDirect(data.item, (data.item.old_images || []).map(p => ({ image_path: p })));
+                } else {
+                    Swal.fire('Error', 'Item data not found.', 'error');
+                }
+            })
+            .catch(() => Swal.fire('Error', 'Could not retrieve item data.', 'error'));
         return;
     }
     const oldPhotos = allPhotosMap[itemId] || [];
@@ -574,9 +588,13 @@ function openArrivalModalDirect(item, oldPhotos = []) {
     
     if (item.reached_condition) {
         document.getElementById('modalCondition').value = item.reached_condition;
+    } else {
+        document.getElementById('modalCondition').value = 'perfect';
     }
     if (item.reached_notes) {
         document.getElementById('modalNotes').value = item.reached_notes;
+    } else {
+        document.getElementById('modalNotes').value = '';
     }
 
     // Set old office photo thumbnail for verification reference
@@ -590,6 +608,9 @@ function openArrivalModalDirect(item, oldPhotos = []) {
     // Reset captured photos for fresh arrival entry
     arrivalPhotoModule.capturedImages = [];
     arrivalPhotoModule.updateHiddenInput();
+    document.getElementById('arrivalUploadedFilesPreview').innerHTML = '';
+    const fileInput = document.getElementById('arrivalPhotosInput');
+    if (fileInput) fileInput.value = '';
 
     const modal = document.getElementById('arrivalModal');
     modal.classList.remove('hidden');
@@ -620,8 +641,74 @@ function previewArrivalUploadedFiles(input) {
     }
 }
 
-// If scan parameter was passed in URL (e.g. from Dashboard or Quick Scan), open modal automatically!
+// Handle Arrival Form Submission via AJAX (with Instant UI Feedback & No Page Break)
 document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('arrivalForm');
+    if (form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('arrivalSubmitBtn');
+            const origHtml = submitBtn.innerHTML;
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Saving Arrival...';
+
+            try {
+                const formData = new FormData(form);
+                formData.set('is_ajax', '1');
+
+                // Client-side compression for any device photos to prevent exceeding Hostinger upload limits
+                const fileInput = document.getElementById('arrivalPhotosInput');
+                if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                    formData.delete('arrival_photos[]');
+                    for (const f of fileInput.files) {
+                        const compressed = await compressImageFile(f, 1280, 0.82);
+                        formData.append('arrival_photos[]', compressed, compressed.name);
+                    }
+                }
+
+                const response = await fetch('api/mark-reached.php', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    closeArrivalModal();
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Product Reached!',
+                        text: result.message,
+                        timer: 1800,
+                        showConfirmButton: false
+                    });
+
+                    // Reload checklist to update counters and status cleanly
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1200);
+
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Could Not Mark as Reached',
+                        text: result.message || 'An error occurred while saving to database.'
+                    });
+                }
+            } catch (err) {
+                console.error('AJAX error:', err);
+                Swal.fire('Error', 'Failed to save arrival status: ' + err.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = origHtml;
+            }
+        });
+    }
+
+    // If scan parameter was passed in URL (e.g. from Dashboard or Quick Scan), open modal automatically!
     const urlParams = new URLSearchParams(window.location.search);
     const autoScan = urlParams.get('scan');
     if (autoScan) {
@@ -629,7 +716,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(res => res.json())
             .then(data => {
                 if (data.success && data.item) {
-                    const oldPhotos = data.item.old_images.map(p => ({ image_path: p }));
+                    const oldPhotos = (data.item.old_images || []).map(p => ({ image_path: p }));
                     openArrivalModalDirect(data.item, oldPhotos);
                 }
             });

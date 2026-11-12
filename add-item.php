@@ -148,7 +148,7 @@ require_once __DIR__ . '/header.php';
             </div>
         <?php endif; ?>
 
-        <form action="add-item.php" method="POST" enctype="multipart/form-data" class="p-6 sm:p-8 space-y-6">
+        <form id="addItemForm" action="add-item.php" method="POST" enctype="multipart/form-data" class="p-6 sm:p-8 space-y-6">
             <!-- Hidden Input for In-built Camera Photos (JSON array) -->
             <input type="hidden" name="camera_images" id="cameraImagesInput" value="[]">
 
@@ -324,7 +324,7 @@ require_once __DIR__ . '/header.php';
                 <a href="items.php" class="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-semibold text-sm hover:bg-slate-50 text-center transition-colors">
                     Cancel
                 </a>
-                <button type="submit" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm shadow-md shadow-sky-600/30 transition-all hover:-translate-y-0.5 flex items-center justify-center">
+                <button type="submit" id="addItemSubmitBtn" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm shadow-md shadow-sky-600/30 transition-all hover:-translate-y-0.5 flex items-center justify-center">
                     <i class="fa-solid fa-check mr-2"></i> Save & Pack Item
                 </button>
             </div>
@@ -512,6 +512,37 @@ function previewSelectedFiles(input) {
         });
     }
 }
+
+// Compress uploaded files on form submission to prevent exceeding PHP post_max_size
+document.addEventListener('DOMContentLoaded', () => {
+    const addForm = document.getElementById('addItemForm');
+    if (addForm) {
+        addForm.addEventListener('submit', async function(e) {
+            const btn = document.getElementById('addItemSubmitBtn');
+            const fileInput = document.getElementById('filePhotosInput');
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                e.preventDefault();
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Optimizing Photos & Saving...';
+
+                try {
+                    const dataTransfer = new DataTransfer();
+                    for (const f of fileInput.files) {
+                        const compressed = await compressImageFile(f, 1280, 0.82);
+                        dataTransfer.items.add(compressed);
+                    }
+                    fileInput.files = dataTransfer.files;
+                } catch(err) {
+                    console.warn('Compression fallback:', err);
+                }
+                addForm.submit();
+            } else {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Saving Item...';
+            }
+        });
+    }
+});
 </script>
 
 <?php require_once __DIR__ . '/footer.php'; ?>

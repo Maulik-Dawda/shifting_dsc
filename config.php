@@ -95,15 +95,53 @@ class Env {
 Env::load(BASE_PATH . '/.env');
 
 // ====================================================================
-// DATABASE CONFIGURATION
-// Prioritizes .env values, with direct fallback here if needed
+// DATABASE CONFIGURATION SETTINGS
+// 1. Direct configuration: you can enter your Hostinger credentials here
+// 2. OR in .env file (if visible / preferred)
+// 3. OR interactively test and save credentials at /db-test.php
 // ====================================================================
-define('DB_DRIVER', strtolower(Env::get('DB_DRIVER', 'mysql'))); // 'mysql' (Hostinger) or 'sqlite'
-define('DB_HOST', Env::get('DB_HOST', 'localhost'));
-define('DB_PORT', Env::get('DB_PORT', '3306'));
-define('DB_NAME', Env::get('DB_NAME', ''));
-define('DB_USER', Env::get('DB_USER', ''));
-define('DB_PASS', Env::get('DB_PASS', ''));
+$CONFIG_DB = [
+    'driver' => 'mysql',       // 'mysql' (Hostinger) or 'sqlite'
+    'host'   => 'localhost',   // Hostinger MySQL host (usually 'localhost')
+    'port'   => '3306',
+    'name'   => '',            // Hostinger Database Name (e.g. u123456789_inventory)
+    'user'   => '',            // Hostinger Database User (e.g. u123456789_user)
+    'pass'   => '',            // Hostinger Database Password
+];
+
+// Determine effective configuration (.env takes precedence if set with non-placeholder values, otherwise $CONFIG_DB)
+$envDriver = Env::get('DB_DRIVER');
+$envHost   = Env::get('DB_HOST');
+$envPort   = Env::get('DB_PORT');
+$envName   = Env::get('DB_NAME');
+$envUser   = Env::get('DB_USER');
+$envPass   = Env::get('DB_PASS');
+
+// If .env still contains placeholder values, but $CONFIG_DB has real user credentials, prioritize $CONFIG_DB!
+$isPlaceholderEnv = ($envName === 'u123456789_shifting_dsc' || $envPass === 'YourDatabasePasswordHere');
+
+if ($isPlaceholderEnv && !empty($CONFIG_DB['name']) && !empty($CONFIG_DB['user'])) {
+    $effectiveDriver = $CONFIG_DB['driver'];
+    $effectiveHost   = $CONFIG_DB['host'];
+    $effectivePort   = $CONFIG_DB['port'];
+    $effectiveName   = $CONFIG_DB['name'];
+    $effectiveUser   = $CONFIG_DB['user'];
+    $effectivePass   = $CONFIG_DB['pass'];
+} else {
+    $effectiveDriver = (!empty($envDriver)) ? strtolower($envDriver) : $CONFIG_DB['driver'];
+    $effectiveHost   = (!empty($envHost)) ? $envHost : ($CONFIG_DB['host'] ?: 'localhost');
+    $effectivePort   = (!empty($envPort)) ? $envPort : ($CONFIG_DB['port'] ?: '3306');
+    $effectiveName   = (!empty($envName)) ? $envName : $CONFIG_DB['name'];
+    $effectiveUser   = (!empty($envUser)) ? $envUser : $CONFIG_DB['user'];
+    $effectivePass   = ($envPass !== null && $envPass !== '') ? $envPass : $CONFIG_DB['pass'];
+}
+
+define('DB_DRIVER', $effectiveDriver);
+define('DB_HOST', $effectiveHost);
+define('DB_PORT', $effectivePort);
+define('DB_NAME', $effectiveName);
+define('DB_USER', $effectiveUser);
+define('DB_PASS', $effectivePass);
 
 // Ensure storage directories exist
 foreach ([UPLOAD_DIR_OLD, UPLOAD_DIR_REACHED, DATA_DIR] as $dir) {
@@ -114,7 +152,7 @@ foreach ([UPLOAD_DIR_OLD, UPLOAD_DIR_REACHED, DATA_DIR] as $dir) {
 
 /**
  * Get PDO Database Connection
- * Strictly respects DB_DRIVER from .env (no silent local file fallback)
+ * Strictly respects DB_DRIVER from .env / config
  */
 function get_db() {
     static $pdo = null;
@@ -126,7 +164,7 @@ function get_db() {
         if (DB_DRIVER === 'mysql') {
             // Validate required MySQL parameters
             if (empty(DB_NAME) || empty(DB_USER)) {
-                throw new Exception("Database Name (DB_NAME) or Username (DB_USER) is empty. Please configure your .env file with your Hostinger database details.");
+                throw new Exception("Database Name (DB_NAME) or Username (DB_USER) is empty. Please configure your credentials in .env, config.php, or use the db-test.php setup tool.");
             }
 
             $dsn = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4";
@@ -141,7 +179,7 @@ function get_db() {
             initialize_database($pdo, 'mysql');
 
         } else {
-            // SQLite Connection (Only when DB_DRIVER=sqlite in .env)
+            // SQLite Connection (Only when DB_DRIVER=sqlite)
             $dbPath = DATA_DIR . '/inventory.db';
             $isNew = !file_exists($dbPath);
             $pdo = new PDO("sqlite:" . $dbPath);
@@ -154,14 +192,22 @@ function get_db() {
             }
         }
     } catch (Throwable $e) {
-        // Professional Error Display (Shows exact credentials read from .env so user can diagnose immediately)
+        // If request is AJAX or JSON, return JSON error response
+        if ((!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') || 
+            (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) ||
+            (isset($_POST['is_ajax']) && $_POST['is_ajax'] == '1')) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Database connection failed: ' . $e->getMessage()]);
+            exit;
+        }
+
+        // Professional Error Display for regular page views
         $driver = htmlspecialchars(DB_DRIVER);
         $host = htmlspecialchars(DB_HOST);
         $port = htmlspecialchars(DB_PORT);
         $dbname = htmlspecialchars(DB_NAME);
         $user = htmlspecialchars(DB_USER);
         $errorMsg = htmlspecialchars($e->getMessage());
-        $envPath = htmlspecialchars(BASE_PATH . '/.env');
 
         die("
         <!DOCTYPE html>
@@ -188,7 +234,7 @@ function get_db() {
                     {$errorMsg}
                 </div>
 
-                <h3 class='text-xs font-bold text-slate-400 uppercase tracking-wider mb-2'>Credentials Loaded from <code>.env</code>:</h3>
+                <h3 class='text-xs font-bold text-slate-400 uppercase tracking-wider mb-2'>Credentials Loaded:</h3>
                 <div class='bg-slate-950 rounded-xl border border-slate-800 divide-y divide-slate-800 text-xs font-mono mb-5 overflow-hidden'>
                     <div class='flex justify-between p-2.5 px-3.5'><span class='text-slate-500 font-sans font-semibold'>DB_DRIVER:</span><span class='text-sky-400 font-bold'>{$driver}</span></div>
                     <div class='flex justify-between p-2.5 px-3.5'><span class='text-slate-500 font-sans font-semibold'>DB_HOST:</span><span class='text-slate-200'>{$host}</span></div>
@@ -196,19 +242,11 @@ function get_db() {
                     <div class='flex justify-between p-2.5 px-3.5'><span class='text-slate-500 font-sans font-semibold'>DB_USER:</span><span class='text-amber-400 font-bold'>{$user}</span></div>
                 </div>
 
-                <div class='bg-slate-800/60 rounded-xl p-4 text-xs text-slate-300 space-y-2 border border-slate-700/50'>
-                    <div class='font-bold text-sky-400'>💡 Quick Hostinger Checklist:</div>
-                    <ol class='list-decimal list-inside space-y-1 text-slate-400'>
-                        <li>Log in to <strong>Hostinger hPanel</strong> ➔ <strong>Databases</strong> ➔ <strong>MySQL Databases</strong>.</li>
-                        <li>Verify that <strong>DB_NAME</strong> matches your exact database name (usually starting with <code>u123456789_</code>).</li>
-                        <li>Verify that <strong>DB_USER</strong> matches your database user (also prefixed with <code>u123456789_</code>).</li>
-                        <li>Ensure <strong>DB_PASS</strong> is correct and user has <strong>ALL PRIVILEGES</strong> granted to the database.</li>
-                        <li>Hostinger MySQL host is typically <code>localhost</code>.</li>
-                    </ol>
-                </div>
-
-                <div class='mt-6 text-center'>
-                    <a href='index.php' class='inline-block px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all shadow-md'>
+                <div class='flex gap-3 justify-center'>
+                    <a href='db-test.php' class='px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-md'>
+                        🛠️ Open Database Setup Tool
+                    </a>
+                    <a href='index.php' class='px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all shadow-md'>
                         ↻ Retry Connection
                     </a>
                 </div>
@@ -275,19 +313,19 @@ function initialize_database($pdo, $driver = 'mysql') {
                 category VARCHAR(100) DEFAULT 'General',
                 old_location VARCHAR(150) DEFAULT '',
                 new_location VARCHAR(150) DEFAULT '',
-                status ENUM('packed','in_transit','reached','damaged') NOT NULL DEFAULT 'packed',
+                status VARCHAR(50) NOT NULL DEFAULT 'packed',
                 old_condition TEXT DEFAULT NULL,
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 reached_at DATETIME DEFAULT NULL,
                 reached_by VARCHAR(100) DEFAULT NULL,
-                reached_condition ENUM('perfect','minor_damage','damaged','missing_parts') DEFAULT NULL,
+                reached_condition VARCHAR(50) DEFAULT NULL,
                 reached_notes TEXT DEFAULT NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
             CREATE TABLE IF NOT EXISTS item_images (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 item_id INT NOT NULL,
-                stage ENUM('old_office','reached_office') NOT NULL DEFAULT 'old_office',
+                stage VARCHAR(50) NOT NULL DEFAULT 'old_office',
                 image_path VARCHAR(255) NOT NULL,
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
@@ -301,6 +339,15 @@ function initialize_database($pdo, $driver = 'mysql') {
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
+
+        // Safely migrate columns to VARCHAR(50) to prevent any strict ENUM truncation crashes
+        try {
+            $pdo->exec("ALTER TABLE items MODIFY COLUMN status VARCHAR(50) NOT NULL DEFAULT 'packed'");
+            $pdo->exec("ALTER TABLE items MODIFY COLUMN reached_condition VARCHAR(50) DEFAULT NULL");
+            $pdo->exec("ALTER TABLE item_images MODIFY COLUMN stage VARCHAR(50) NOT NULL DEFAULT 'old_office'");
+        } catch (Throwable $alterEx) {
+            // Non-critical if table is fresh or user doesn't have ALTER permissions
+        }
 
         seed_sample_data($pdo);
     }

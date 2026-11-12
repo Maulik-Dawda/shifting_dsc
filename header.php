@@ -41,6 +41,10 @@ $currentPage = basename($_SERVER['PHP_SELF']);
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <!-- JsBarcode for rendering barcodes -->
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <!-- Core Application Modules (Loaded in header so all page inline scripts can use them immediately) -->
+    <script src="assets/js/camera.js"></script>
+    <script src="assets/js/scanner.js"></script>
+    <script src="assets/js/app.js"></script>
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/custom.css">
     <script>

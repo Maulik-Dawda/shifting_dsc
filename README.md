@@ -28,11 +28,14 @@
 
 ## 🌐 Hostinger / cPanel Deployment & Database Setup
 
-### Step 1: Upload Files
-Upload or git clone the project to `public_html` (or your subdomain directory) in Hostinger File Manager or Git deployment.
+### Option A: 1-Click Browser Setup via `db-test.php` (Easiest)
+1. Deploy or pull the files onto your Hostinger account.
+2. In your web browser, navigate to: `http://your-domain.com/db-test.php`
+3. Enter your Hostinger MySQL Database Name, Username, and Password.
+4. Click **"Test & Save Database Credentials"**. It automatically verifies the connection, saves it to `.env`, and sets up all tables!
 
-### Step 2: Configure `.env`
-1. In your project root on Hostinger, copy `.env.example` to `.env` (or create a new `.env` file):
+### Option B: Configure via `.env` file
+1. In your project root on Hostinger, edit or create `.env`:
    ```env
    DB_DRIVER=mysql
    DB_HOST=localhost
@@ -41,11 +44,20 @@ Upload or git clone the project to `public_html` (or your subdomain directory) i
    DB_USER=u123456789_dsc_user
    DB_PASS=YourStrongHostingerPassword
    ```
-2. **Where to find these in Hostinger hPanel**:
-   - Go to **Databases** -> **MySQL Databases**.
-   - Note the **MySQL Database Name** and **MySQL Username** (they always include your account prefix, e.g., `u123456789_...`).
-   - The host is usually `localhost`.
-   - Make sure your database user has **All Privileges** assigned.
+
+### Option C: Direct Configuration in `config.php`
+If you cannot view or edit dotfiles in Hostinger File Manager:
+Open `config.php` and fill in `$CONFIG_DB` at the top:
+```php
+$CONFIG_DB = [
+    'driver' => 'mysql',
+    'host'   => 'localhost',
+    'port'   => '3306',
+    'name'   => 'u123456789_shifting_dsc',
+    'user'   => 'u123456789_dsc_user',
+    'pass'   => 'YourStrongHostingerPassword',
+];
+```
 
 ### Step 3: Automatic Table Initialization
 - On first visit, `config.php` will **automatically connect to your MySQL database and create all tables** (`items`, `item_images`, `activity_logs`) and populate the initial seed records!

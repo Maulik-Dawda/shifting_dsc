@@ -78,9 +78,5 @@
         </div>
     </div>
 
-    <!-- Core App Scripts -->
-    <script src="assets/js/camera.js"></script>
-    <script src="assets/js/scanner.js"></script>
-    <script src="assets/js/app.js"></script>
 </body>
 </html>

@@ -1,20 +1,21 @@
 <?php
 /**
  * DSC Shifting Inventory Management System
- * Database & Application Configuration (.env Enabled)
+ * Database & Application Configuration (.env + Direct Config Enabled)
  */
 
-// Show errors during development if configured
+// Show errors during setup
 error_reporting(E_ALL);
+ini_set('display_errors', '1');
 
-// Base directory paths
+// Base Paths
 define('BASE_PATH', __DIR__);
 define('UPLOAD_DIR_OLD', BASE_PATH . '/uploads/old_office');
 define('UPLOAD_DIR_REACHED', BASE_PATH . '/uploads/reached_office');
 define('DATA_DIR', BASE_PATH . '/data');
 
 /**
- * Lightweight .env Parser (Zero-dependency, PHP 7.4+ & 8.x compatible)
+ * Lightweight .env Parser
  */
 function load_env_file($filePath) {
     if (!file_exists($filePath) || !is_readable($filePath)) {
@@ -26,7 +27,6 @@ function load_env_file($filePath) {
     }
     foreach ($lines as $line) {
         $line = trim($line);
-        // Skip comments and empty lines
         if ($line === '' || substr($line, 0, 1) === '#') {
             continue;
         }
@@ -35,7 +35,7 @@ function load_env_file($filePath) {
             $key = trim($key);
             $value = trim($value);
 
-            // Strip enclosing quotes if present
+            // Strip quotes
             $len = strlen($value);
             if ($len >= 2) {
                 $first = substr($value, 0, 1);
@@ -52,42 +52,45 @@ function load_env_file($filePath) {
     }
 }
 
-// Load .env from root directory if present
+// Load .env
 load_env_file(BASE_PATH . '/.env');
 
 /**
- * Helper function to retrieve environment variables with fallback
+ * Environment Variable Helper
  */
 function env($key, $default = null) {
-    $value = getenv($key);
-    if ($value === false) {
-        if (isset($_ENV[$key])) {
-            $value = $_ENV[$key];
-        } elseif (isset($_SERVER[$key])) {
-            $value = $_SERVER[$key];
+    $val = getenv($key);
+    if ($val === false || $val === '') {
+        if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
+            $val = $_ENV[$key];
+        } elseif (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
+            $val = $_SERVER[$key];
         } else {
             return $default;
         }
     }
-    return $value;
+    return $val;
 }
 
-// Determine Database Driver:
-// If DB_DRIVER is set in .env, use that.
-// If not specified, but DB_NAME is configured (typical for Hostinger MySQL), default to mysql.
-$configuredDriver = strtolower(env('DB_DRIVER', ''));
-if (empty($configuredDriver)) {
-    $configuredDriver = (env('DB_NAME') && env('DB_NAME') !== 'shifting_dsc') ? 'mysql' : 'sqlite';
-}
+// ====================================================================
+// DIRECT CONFIGURATION FALLBACK (HOSTINGER / PRODUCTION OR LOCAL)
+// If you cannot edit .env, you can also change credentials right here!
+// ====================================================================
+$db_driver = env('DB_DRIVER', 'mysql'); // 'mysql' (Hostinger) or 'sqlite'
+$db_host   = env('DB_HOST', 'localhost');
+$db_port   = env('DB_PORT', '3306');
+$db_name   = env('DB_NAME', 'u123456789_shifting_dsc'); // Change to your Hostinger database name
+$db_user   = env('DB_USER', 'u123456789_dsc_user');     // Change to your Hostinger database user
+$db_pass   = env('DB_PASS', '');                       // Change to your Hostinger database password
 
-define('DB_DRIVER', $configuredDriver);
-define('DB_HOST', env('DB_HOST', 'localhost'));
-define('DB_PORT', env('DB_PORT', '3306'));
-define('DB_NAME', env('DB_NAME', 'shifting_dsc'));
-define('DB_USER', env('DB_USER', 'root'));
-define('DB_PASS', env('DB_PASS', ''));
+define('DB_DRIVER', strtolower($db_driver));
+define('DB_HOST', $db_host);
+define('DB_PORT', $db_port);
+define('DB_NAME', $db_name);
+define('DB_USER', $db_user);
+define('DB_PASS', $db_pass);
 
-// Ensure required upload and data directories exist
+// Ensure upload & data directories exist with write permissions
 foreach ([UPLOAD_DIR_OLD, UPLOAD_DIR_REACHED, DATA_DIR] as $dir) {
     if (!is_dir($dir)) {
         @mkdir($dir, 0777, true);
@@ -103,9 +106,11 @@ function get_db() {
         return $pdo;
     }
 
+    $isLocal = in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1']) || in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1']);
+
     try {
         if (DB_DRIVER === 'mysql') {
-            // MySQL Connection (Hostinger / cPanel / Remote)
+            // MySQL Connection (Hostinger)
             $dsn = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4";
             $pdo = new PDO($dsn, DB_USER, DB_PASS, [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -113,12 +118,12 @@ function get_db() {
                 PDO::ATTR_EMULATE_PREPARES => false,
                 PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
             ]);
-            
-            // Auto-create tables if they don't exist yet
+
+            // Auto-create tables in MySQL if not present
             initialize_database($pdo, 'mysql');
 
         } else {
-            // SQLite Connection (Default Zero-Config fallback)
+            // SQLite Connection
             $dbPath = DATA_DIR . '/inventory.db';
             $isNew = !file_exists($dbPath);
             $pdo = new PDO("sqlite:" . $dbPath);
@@ -131,8 +136,25 @@ function get_db() {
             }
         }
     } catch (PDOException $e) {
-        // Helpful diagnostic display for Hostinger / MySQL configuration errors
-        $driver = DB_DRIVER;
+        // If on localhost and MySQL isn't running, automatically fallback to SQLite for local development
+        if ($isLocal && DB_DRIVER === 'mysql') {
+            try {
+                $dbPath = DATA_DIR . '/inventory.db';
+                $isNew = !file_exists($dbPath);
+                $pdo = new PDO("sqlite:" . $dbPath);
+                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+                $pdo->exec("PRAGMA foreign_keys = ON;");
+                if ($isNew || filesize($dbPath) == 0) {
+                    initialize_database($pdo, 'sqlite');
+                }
+                return $pdo;
+            } catch (Exception $sqlErr) {
+                // fall through to error display
+            }
+        }
+
+        // Diagnostic error display for Hostinger / production
         $host = htmlspecialchars(DB_HOST);
         $dbname = htmlspecialchars(DB_NAME);
         $user = htmlspecialchars(DB_USER);
@@ -145,39 +167,38 @@ function get_db() {
             <meta charset='UTF-8'>
             <title>Database Connection Error - ShiftTrack DSC</title>
             <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0f172a; color: #f8fafc; padding: 40px 20px; line-height: 1.6; }
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #f8fafc; padding: 40px 20px; }
                 .card { max-width: 650px; margin: 0 auto; background: #1e293b; border-radius: 16px; padding: 32px; border: 1px solid #334155; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
-                h2 { color: #f87171; margin-top: 0; font-size: 22px; display: flex; items-center; gap: 8px; }
+                h2 { color: #f87171; margin-top: 0; font-size: 22px; }
                 .msg-box { background: #450a0a; border: 1px solid #7f1d1d; color: #fca5a5; padding: 14px; border-radius: 8px; font-family: monospace; font-size: 13px; margin: 16px 0; word-break: break-all; }
                 .config-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
                 .config-table td { padding: 8px 12px; border-bottom: 1px solid #334155; }
                 .config-table td:first-child { color: #94a3b8; width: 35%; font-weight: 600; }
                 .config-table td:last-child { color: #38bdf8; font-family: monospace; }
-                .tips { background: #0f172a; padding: 16px; border-radius: 8px; border-left: 4px solid #38bdf8; font-size: 13px; color: #cbd5e1; margin-top: 20px; }
+                .tips { background: #0f172a; padding: 16px; border-radius: 8px; border-left: 4px solid #38bdf8; font-size: 13px; color: #cbd5e1; margin-top: 20px; line-height: 1.5; }
                 .tips strong { color: #38bdf8; }
                 code { background: #334155; padding: 2px 6px; border-radius: 4px; color: #f1f5f9; }
             </style>
         </head>
         <body>
             <div class='card'>
-                <h2>⚠️ Database Connection Error</h2>
-                <p>Could not connect to the database using the configuration in your <code>.env</code> file:</p>
+                <h2>⚠️ Hostinger MySQL Connection Error</h2>
+                <p>Could not connect to MySQL using the settings in <code>.env</code> or <code>config.php</code>:</p>
                 <div class='msg-box'>{$errorMsg}</div>
                 
                 <table class='config-table'>
-                    <tr><td>DB_DRIVER</td><td>{$driver}</td></tr>
                     <tr><td>DB_HOST</td><td>{$host}</td></tr>
                     <tr><td>DB_NAME</td><td>{$dbname}</td></tr>
                     <tr><td>DB_USER</td><td>{$user}</td></tr>
                 </table>
 
                 <div class='tips'>
-                    <strong>💡 Hostinger Troubleshooting Checklist:</strong>
+                    <strong>💡 How to fix this in Hostinger hPanel:</strong>
                     <ol style='margin: 8px 0 0 16px; padding: 0;'>
-                        <li>Verify your <code>.env</code> file is created in your website root folder on Hostinger.</li>
-                        <li>On Hostinger, both the database name and database username always include your account prefix (e.g., <code>u123456789_shifting</code>).</li>
-                        <li>The host on Hostinger is usually <code>localhost</code>.</li>
-                        <li>Ensure the database user has been granted <strong>ALL PRIVILEGES</strong> on the database in Hostinger hPanel.</li>
+                        <li>Log in to <strong>Hostinger hPanel</strong> ➔ <strong>Databases</strong> ➔ <strong>MySQL Databases</strong>.</li>
+                        <li>Verify your exact <strong>Database Name</strong> and <strong>Username</strong> (Hostinger always prefixes them with your account ID, e.g. <code>u123456789_shifting</code>).</li>
+                        <li>Update the credentials in your <code>.env</code> file or at the top of <code>config.php</code>.</li>
+                        <li>Ensure the database user is granted <strong>All Privileges</strong>.</li>
                     </ol>
                 </div>
             </div>
@@ -270,7 +291,6 @@ function initialize_database($pdo, $driver = 'mysql') {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
 
-        // Seed initial items if database is empty
         seed_sample_data($pdo);
     }
 }
@@ -314,7 +334,7 @@ function seed_sample_data($pdo) {
             ],
             [
                 'brand' => 'Apple',
-                'model' => 'MacBook Pro 16" M2',
+                'model' => 'MacBook Pro 16\" M2',
                 'serial_number' => 'DSC-MBP-16-9923',
                 'category' => 'Laptops',
                 'old_location' => 'Old Office - Design Studio Desk 01',
@@ -342,7 +362,7 @@ function seed_sample_data($pdo) {
             ],
             [
                 'brand' => 'Samsung',
-                'model' => '27" Curved LED Monitor S27E510CS',
+                'model' => '27\" Curved LED Monitor S27E510CS',
                 'serial_number' => 'DSC-MON-27-3312',
                 'category' => 'Monitors',
                 'old_location' => 'Old Office - Finance Desk 02',

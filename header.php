@@ -43,6 +43,17 @@ $currentPage = basename($_SERVER['PHP_SELF']);
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/custom.css">
+    <script>
+    // Helpful advisory if loaded on live domain over unencrypted HTTP (which blocks browser camera)
+    if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        document.addEventListener('DOMContentLoaded', () => {
+            const bar = document.createElement('div');
+            bar.className = 'bg-amber-400 text-slate-900 px-4 py-2 text-xs font-medium flex items-center justify-between text-center sticky top-0 z-50 shadow';
+            bar.innerHTML = '<span>🔒 <strong>Notice:</strong> Mobile browsers block live camera access on non-secure HTTP. Please use <strong>HTTPS (https://...)</strong> or use the "Device Camera / Gallery" button to capture photos.</span><button onclick="this.parentElement.remove()" class="ml-3 font-bold text-base px-2">&times;</button>';
+            document.body.prepend(bar);
+        });
+    }
+    </script>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans antialiased">
 

@@ -291,16 +291,16 @@ require_once __DIR__ . '/header.php';
                         </button>
                     </div>
 
-                    <!-- Option B: Traditional File Upload -->
+                    <!-- Option B: Native Device Camera / File Upload -->
                     <div class="border-2 border-dashed border-slate-300 hover:border-slate-400 bg-slate-50 rounded-2xl p-5 text-center transition-all relative flex flex-col items-center justify-center">
                         <div class="w-12 h-12 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xl mb-2">
-                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <i class="fa-solid fa-camera-retro"></i>
                         </div>
-                        <h4 class="font-bold text-sm text-slate-900">Upload Image Files</h4>
-                        <p class="text-xs text-slate-500 mt-1">Select one or more photos from computer / gallery.</p>
-                        <input type="file" name="photos[]" id="filePhotosInput" multiple accept="image/*" onchange="previewSelectedFiles(this)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                        <h4 class="font-bold text-sm text-slate-900">Device Camera / Gallery</h4>
+                        <p class="text-xs text-slate-500 mt-1">Open phone's native camera or choose from gallery.</p>
+                        <input type="file" name="photos[]" id="filePhotosInput" multiple accept="image/*" capture="environment" onchange="previewSelectedFiles(this)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
                         <span class="mt-3 px-3 py-1.5 bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold pointer-events-none">
-                            Browse Files
+                            Take Photo / Browse
                         </span>
                     </div>
                 </div>

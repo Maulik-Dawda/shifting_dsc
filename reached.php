@@ -30,6 +30,17 @@ $stmt = $db->prepare("SELECT * FROM items $whereSql ORDER BY (status = 'reached'
 $stmt->execute($params);
 $items = $stmt->fetchAll();
 
+// Pre-load items map and photos map for safe JavaScript rendering (no broken quotes in HTML attributes!)
+$itemsMap = [];
+$photosMap = [];
+
+foreach ($items as $it) {
+    $itemsMap[$it['id']] = $it;
+    $pStmt = $db->prepare("SELECT * FROM item_images WHERE item_id = :id AND stage = 'old_office'");
+    $pStmt->execute([':id' => $it['id']]);
+    $photosMap[$it['id']] = $pStmt->fetchAll();
+}
+
 // Counts for filter tabs
 $totalCount = $db->query("SELECT COUNT(*) FROM items")->fetchColumn();
 $pendingCount = $db->query("SELECT COUNT(*) FROM items WHERE status != 'reached'")->fetchColumn();
@@ -49,6 +60,17 @@ require_once __DIR__ . '/header.php';
         Stage 2: New Office Arrival Verification
     </span>
 </div>
+
+<!-- Notification Banner if any -->
+<?php if (isset($_GET['msg'])): ?>
+    <div class="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl flex items-center justify-between shadow-sm text-sm">
+        <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i>
+            <span class="font-medium"><?= htmlspecialchars($_GET['msg']) ?></span>
+        </div>
+        <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-700"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+<?php endif; ?>
 
 <!-- Header Card & Barcode Scan Checkoff Bar -->
 <div class="bg-gradient-to-r from-emerald-800 via-teal-900 to-slate-900 text-white rounded-2xl p-6 sm:p-7 shadow-lg mb-6 border border-emerald-700/50">
@@ -127,7 +149,7 @@ require_once __DIR__ . '/header.php';
             Checklist (<?= count($items) ?> item<?= count($items) !== 1 ? 's' : '' ?>)
         </div>
         <div class="text-xs text-slate-500">
-            Click checkbox to verify arrival & take photos
+            Click checkbox or "Mark Arrived" to verify & capture photos
         </div>
     </div>
 
@@ -144,10 +166,7 @@ require_once __DIR__ . '/header.php';
             <?php foreach ($items as $item): ?>
                 <?php
                     $isReached = ($item['status'] === 'reached');
-                    // Fetch Old Office reference images
-                    $oldPhotosStmt = $db->prepare("SELECT * FROM item_images WHERE item_id = :id AND stage = 'old_office'");
-                    $oldPhotosStmt->execute([':id' => $item['id']]);
-                    $oldPhotos = $oldPhotosStmt->fetchAll();
+                    $oldPhotos = $photosMap[$item['id']] ?? [];
 
                     // Fetch Reached Office images if already reached
                     $reachedPhotosStmt = $db->prepare("SELECT * FROM item_images WHERE item_id = :id AND stage = 'reached_office'");
@@ -161,11 +180,11 @@ require_once __DIR__ . '/header.php';
                         <!-- Custom Interactive Checkbox / Arrival Trigger -->
                         <div class="pt-0.5 flex-shrink-0">
                             <?php if ($isReached): ?>
-                                <button type="button" onclick="openArrivalModal(<?= htmlspecialchars(json_encode($item)) ?>, <?= htmlspecialchars(json_encode($oldPhotos)) ?>)" class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/30 hover:scale-105 transition-transform" title="Arrived! Click to view or add more arrival photos">
+                                <button type="button" onclick="openArrivalModal(<?= $item['id'] ?>)" class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/30 hover:scale-105 transition-transform" title="Arrived! Click to view or add more arrival photos">
                                     <i class="fa-solid fa-check text-sm"></i>
                                 </button>
                             <?php else: ?>
-                                <button type="button" onclick="openArrivalModal(<?= htmlspecialchars(json_encode($item)) ?>, <?= htmlspecialchars(json_encode($oldPhotos)) ?>)" class="w-8 h-8 rounded-xl border-2 border-slate-300 hover:border-emerald-500 bg-white hover:bg-emerald-50 flex items-center justify-center text-slate-400 hover:text-emerald-600 shadow-sm transition-all group" title="Click to verify arrival & capture photo">
+                                <button type="button" onclick="openArrivalModal(<?= $item['id'] ?>)" class="w-8 h-8 rounded-xl border-2 border-slate-300 hover:border-emerald-500 bg-white hover:bg-emerald-50 flex items-center justify-center text-slate-400 hover:text-emerald-600 shadow-sm transition-all group" title="Click to verify arrival & capture photo">
                                     <i class="fa-solid fa-check text-sm opacity-0 group-hover:opacity-100 transition-opacity"></i>
                                 </button>
                             <?php endif; ?>
@@ -222,12 +241,12 @@ require_once __DIR__ . '/header.php';
                     <!-- Right: Action Button -->
                     <div class="flex items-center space-x-2 w-full sm:w-auto justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                         <?php if (!$isReached): ?>
-                            <button type="button" onclick="openArrivalModal(<?= htmlspecialchars(json_encode($item)) ?>, <?= htmlspecialchars(json_encode($oldPhotos)) ?>)" class="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm shadow-emerald-600/20 transition-all flex items-center justify-center space-x-1.5">
+                            <button type="button" onclick="openArrivalModal(<?= $item['id'] ?>)" class="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm shadow-emerald-600/20 transition-all flex items-center justify-center space-x-1.5">
                                 <i class="fa-solid fa-camera"></i>
                                 <span>Mark Arrived & Snap</span>
                             </button>
                         <?php else: ?>
-                            <button type="button" onclick="openArrivalModal(<?= htmlspecialchars(json_encode($item)) ?>, <?= htmlspecialchars(json_encode($oldPhotos)) ?>)" class="px-3 py-1.5 text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg">
+                            <button type="button" onclick="openArrivalModal(<?= $item['id'] ?>)" class="px-3 py-1.5 text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg">
                                 <i class="fa-solid fa-images mr-1"></i> Add Photos
                             </button>
                         <?php endif; ?>
@@ -322,9 +341,9 @@ require_once __DIR__ . '/header.php';
                     </label>
                     <span class="text-[11px] text-emerald-700 font-semibold">Proof of condition</span>
                 </div>
-                <p class="text-xs text-slate-500 mb-3">Snap photos of the arrived product at the new office to compare with old office records.</p>
+                <p class="text-xs text-slate-500 mb-3">Snap photos directly with the camera, or choose from device gallery.</p>
 
-                <!-- Dual Trigger: Live Camera vs File Upload -->
+                <!-- Dual Trigger: Live Camera vs Native Camera / File Upload -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <!-- Live Camera Trigger -->
                     <button type="button" onclick="openArrivalLiveCamera()" class="p-3 bg-emerald-50 hover:bg-emerald-100 border-2 border-dashed border-emerald-300 hover:border-emerald-500 rounded-xl text-center transition-all flex flex-col items-center justify-center">
@@ -335,14 +354,14 @@ require_once __DIR__ . '/header.php';
                         <span class="text-[11px] text-slate-500">Capture photo directly now</span>
                     </button>
 
-                    <!-- File Upload Input -->
+                    <!-- File Upload Input with Native Camera Support -->
                     <div class="p-3 bg-slate-50 hover:bg-slate-100 border-2 border-dashed border-slate-300 rounded-xl text-center relative flex flex-col items-center justify-center">
                         <div class="w-10 h-10 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-lg mb-1">
                             <i class="fa-solid fa-upload"></i>
                         </div>
-                        <span class="font-bold text-xs text-slate-900">Upload Photos</span>
-                        <span class="text-[11px] text-slate-500">Choose from device gallery</span>
-                        <input type="file" name="arrival_photos[]" multiple accept="image/*" onchange="previewArrivalUploadedFiles(this)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                        <span class="font-bold text-xs text-slate-900">Device Camera / Gallery</span>
+                        <span class="text-[11px] text-slate-500">Upload or snap on mobile</span>
+                        <input type="file" name="arrival_photos[]" multiple accept="image/*" capture="environment" onchange="previewArrivalUploadedFiles(this)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
                     </div>
                 </div>
 
@@ -458,6 +477,10 @@ require_once __DIR__ . '/header.php';
 </div>
 
 <script>
+// Preloaded data from PHP (clean, secure JSON with hex encoding)
+const allItemsMap = <?= json_encode($itemsMap, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+const allPhotosMap = <?= json_encode($photosMap, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+
 // Arrival Camera Instance
 const arrivalPhotoModule = new PhotoCaptureModule({
     videoElementId: 'arrivalCameraVideo',
@@ -511,9 +534,8 @@ const arrivalBarcodeScanner = new BarcodeScannerModule({
             const resp = await fetch(`api/scan-lookup.php?sn=${encodeURIComponent(scannedSerial)}`);
             const data = await resp.json();
             if (data.success && data.item) {
-                // Fetch old photos
-                const oldPhotos = data.item.old_images.map(path => ({ image_path: path }));
-                openArrivalModal(data.item, oldPhotos);
+                // If in allItemsMap, use id; otherwise open directly
+                openArrivalModalDirect(data.item, data.item.old_images.map(p => ({ image_path: p })));
             } else {
                 Swal.fire('Not Found', `Item with S/N ${scannedSerial} was not found.`, 'warning');
             }
@@ -530,8 +552,19 @@ function closeArrivalBarcodeScanner() {
     arrivalBarcodeScanner.close();
 }
 
-// Open Arrival Modal with Item Data
-function openArrivalModal(item, oldPhotos = []) {
+// Open Arrival Modal by Item ID (Reliable, no broken HTML quotes)
+function openArrivalModal(itemId) {
+    const item = allItemsMap[itemId];
+    if (!item) {
+        Swal.fire('Error', 'Item data not found.', 'error');
+        return;
+    }
+    const oldPhotos = allPhotosMap[itemId] || [];
+    openArrivalModalDirect(item, oldPhotos);
+}
+
+// Direct populator
+function openArrivalModalDirect(item, oldPhotos = []) {
     document.getElementById('modalItemId').value = item.id;
     document.getElementById('modalItemSerial').value = item.serial_number;
     document.getElementById('modalItemTitle').textContent = `${item.brand} ${item.model}`;
@@ -597,7 +630,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(data => {
                 if (data.success && data.item) {
                     const oldPhotos = data.item.old_images.map(p => ({ image_path: p }));
-                    openArrivalModal(data.item, oldPhotos);
+                    openArrivalModalDirect(data.item, oldPhotos);
                 }
             });
     }

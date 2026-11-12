@@ -387,9 +387,9 @@ require_once __DIR__ . '/header.php';
                     <span class="text-xs font-bold text-slate-800">Inbuilt Camera</span>
                 </button>
                 <div class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-300 rounded-xl text-center relative flex flex-col items-center justify-center">
-                    <i class="fa-solid fa-upload text-slate-600 text-xl mb-1"></i>
-                    <span class="text-xs font-bold text-slate-800">Choose Files</span>
-                    <input type="file" name="extra_photos[]" multiple accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer">
+                    <i class="fa-solid fa-camera-retro text-slate-600 text-xl mb-1"></i>
+                    <span class="text-xs font-bold text-slate-800">Device Camera / Files</span>
+                    <input type="file" name="extra_photos[]" multiple accept="image/*" capture="environment" class="absolute inset-0 opacity-0 cursor-pointer">
                 </div>
             </div>
 

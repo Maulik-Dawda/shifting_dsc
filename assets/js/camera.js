@@ -1,6 +1,7 @@
 /**
  * assets/js/camera.js
  * In-built Camera Capture System for DSC Shifting Inventory
+ * Optimized for mobile, desktop, and all modern browsers
  */
 
 class PhotoCaptureModule {
@@ -9,12 +10,15 @@ class PhotoCaptureModule {
         this.previewContainerId = config.previewContainerId;
         this.hiddenInputId = config.hiddenInputId;
         this.modalId = config.modalId || 'cameraModal';
+        this.statusElementId = config.statusElementId || null;
         
         this.videoStream = null;
         this.facingMode = 'environment'; // default to back camera for phone/tablet
         this.capturedImages = []; // Array of base64 strings
         
         this.audioCtx = null;
+        this.availableDevices = [];
+        this.currentDeviceIndex = 0;
     }
 
     /**
@@ -24,25 +28,36 @@ class PhotoCaptureModule {
         try {
             if (!this.audioCtx) {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
-                this.audioCtx = new AudioContext();
+                if (AudioContext) {
+                    this.audioCtx = new AudioContext();
+                }
             }
-            if (this.audioCtx.state === 'suspended') {
+            if (this.audioCtx && this.audioCtx.state === 'suspended') {
                 this.audioCtx.resume();
             }
-            const osc = this.audioCtx.createOscillator();
-            const gain = this.audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(800, this.audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(200, this.audioCtx.currentTime + 0.08);
-            gain.gain.setValueAtTime(0.5, this.audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + 0.08);
-            osc.connect(gain);
-            gain.connect(this.audioCtx.destination);
-            osc.start();
-            osc.stop(this.audioCtx.currentTime + 0.08);
+            if (this.audioCtx) {
+                const osc = this.audioCtx.createOscillator();
+                const gain = this.audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(850, this.audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(150, this.audioCtx.currentTime + 0.09);
+                gain.gain.setValueAtTime(0.4, this.audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + 0.09);
+                osc.connect(gain);
+                gain.connect(this.audioCtx.destination);
+                osc.start();
+                osc.stop(this.audioCtx.currentTime + 0.09);
+            }
         } catch (e) {
-            // Audio context failed or blocked by policy
+            // Audio blocked or unsupported, ignore
         }
+    }
+
+    /**
+     * Check if camera is supported in this browser context
+     */
+    isSupported() {
+        return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
     }
 
     /**
@@ -53,32 +68,68 @@ class PhotoCaptureModule {
         const video = document.getElementById(this.videoElementId);
         if (!video) return;
 
-        const constraints = {
-            video: {
-                facingMode: { ideal: this.facingMode },
-                width: { ideal: 1920 },
-                height: { ideal: 1080 }
-            },
-            audio: false
-        };
+        // Ensure video attributes for mobile browsers
+        video.setAttribute('autoplay', '');
+        video.setAttribute('muted', '');
+        video.setAttribute('playsinline', '');
+        video.muted = true;
+
+        if (!this.isSupported()) {
+            const isHttp = (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1');
+            const reason = isHttp 
+                ? 'Camera access in browsers requires a secure connection (HTTPS). Please open this website using https:// or use the "Open Device Camera / Gallery" option.'
+                : 'Your browser does not support live camera access. Please use the "Open Device Camera / Gallery" option.';
+            
+            Swal.fire({
+                icon: 'warning',
+                title: 'Camera Access Notice',
+                text: reason,
+                confirmButtonColor: '#0284c7'
+            });
+            return;
+        }
 
         try {
-            this.videoStream = await navigator.mediaDevices.getUserMedia(constraints);
-            video.srcObject = this.videoStream;
-            video.play();
-        } catch (err) {
-            console.warn('FacingMode ideal failed, falling back to basic video', err);
-            try {
-                this.videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-                video.srcObject = this.videoStream;
-                video.play();
-            } catch (fallbackErr) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Camera Access Denied',
-                    text: 'Please allow camera permission in your browser settings to capture photos directly.'
-                });
+            // Enumerate devices if possible
+            if (navigator.mediaDevices.enumerateDevices) {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                this.availableDevices = devices.filter(d => d.kind === 'videoinput');
             }
+        } catch (e) {
+            // continue
+        }
+
+        const constraintsList = [
+            // Attempt 1: Facing mode preference
+            { video: { facingMode: { ideal: this.facingMode } }, audio: false },
+            // Attempt 2: Exact facing mode
+            { video: { facingMode: this.facingMode }, audio: false },
+            // Attempt 3: Simple video true
+            { video: true, audio: false }
+        ];
+
+        let streamObtained = false;
+        for (const constraint of constraintsList) {
+            try {
+                this.videoStream = await navigator.mediaDevices.getUserMedia(constraint);
+                video.srcObject = this.videoStream;
+                video.onloadedmetadata = () => {
+                    video.play().catch(err => console.warn('Video play warning:', err));
+                };
+                streamObtained = true;
+                break;
+            } catch (err) {
+                // try next constraint
+            }
+        }
+
+        if (!streamObtained) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Camera Unavailable',
+                text: 'Could not access the camera. Please check camera permissions in your browser or use the file upload option.',
+                confirmButtonColor: '#0284c7'
+            });
         }
     }
 
@@ -87,7 +138,9 @@ class PhotoCaptureModule {
      */
     stopCamera() {
         if (this.videoStream) {
-            this.videoStream.getTracks().forEach(track => track.stop());
+            this.videoStream.getTracks().forEach(track => {
+                try { track.stop(); } catch(e){}
+            });
             this.videoStream = null;
         }
     }
@@ -95,9 +148,9 @@ class PhotoCaptureModule {
     /**
      * Switch between Front and Back camera
      */
-    switchCamera() {
+    async switchCamera() {
         this.facingMode = (this.facingMode === 'environment') ? 'user' : 'environment';
-        this.startCamera();
+        await this.startCamera();
     }
 
     /**
@@ -105,30 +158,47 @@ class PhotoCaptureModule {
      */
     takeSnapshot() {
         const video = document.getElementById(this.videoElementId);
-        if (!video || !this.videoStream) return;
+        if (!video || !this.videoStream) {
+            Swal.fire('Camera not ready', 'Please wait for the camera video stream to start.', 'info');
+            return;
+        }
 
         this.playShutterSound();
 
-        // Shutter flash effect
+        // Shutter flash animation
         const flashOverlay = document.getElementById(this.modalId + '_flash');
         if (flashOverlay) {
             flashOverlay.classList.remove('hidden');
-            setTimeout(() => flashOverlay.classList.add('hidden'), 100);
+            setTimeout(() => flashOverlay.classList.add('hidden'), 120);
         }
 
         const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth || 1280;
-        canvas.height = video.videoHeight || 720;
+        const width = video.videoWidth > 0 ? video.videoWidth : 1280;
+        const height = video.videoHeight > 0 ? video.videoHeight : 720;
+        canvas.width = width;
+        canvas.height = height;
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(video, 0, 0, width, height);
 
-        // Export as high quality JPEG base64
+        // High quality JPEG
         const base64Data = canvas.toDataURL('image/jpeg', 0.88);
         this.capturedImages.push(base64Data);
 
-        // Update UI
+        // Update UI & Hidden Form Input
         this.renderCapturedThumbnails();
         this.updateHiddenInput();
+
+        // Toast feedback
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: `Photo #${this.capturedImages.length} Captured!`,
+                showConfirmButton: false,
+                timer: 1500
+            });
+        }
     }
 
     /**

@@ -13,8 +13,9 @@ function respond($success, $message, $redirectUrl = 'reached.php') {
         exit;
     }
     // Form submission redirect
+    $separator = (strpos($redirectUrl, '?') !== false) ? '&' : '?';
     $param = $success ? 'msg=' . urlencode($message) : 'err=' . urlencode($message);
-    header("Location: ../{$redirectUrl}?" . $param);
+    header("Location: ../{$redirectUrl}{$separator}{$param}");
     exit;
 }
 

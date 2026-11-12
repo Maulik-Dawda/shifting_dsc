@@ -1,3 +1,8 @@
+# Environment files (NEVER commit database credentials to git)
+.env
+.env.local
+.env.*.local
+
 # Ignore uploaded large photo binaries from git if needed, but keep folder structure
 uploads/old_office/*
 !uploads/old_office/.gitkeep

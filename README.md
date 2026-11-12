@@ -24,10 +24,34 @@
 - **Printable Relocation Tag**: Displays auto-generated Code-128 barcode, item specs, and destination desk/bay for sticking on moving boxes.
 - **Audit History**: Log of packing timestamp, mover notes, arrival timestamp, and receiver name.
 
-### 4. Database Architecture
-- **Dual Support**:
-  - **SQLite (Default Zero-Config)**: Creates and seeds `data/inventory.db` automatically on first launch.
-  - **MySQL / MariaDB**: Fully compatible with `database.sql` schema included in the root directory.
+---
+
+## 🌐 Hostinger / cPanel Deployment & Database Setup
+
+### Step 1: Upload Files
+Upload or git clone the project to `public_html` (or your subdomain directory) in Hostinger File Manager or Git deployment.
+
+### Step 2: Configure `.env`
+1. In your project root on Hostinger, copy `.env.example` to `.env` (or create a new `.env` file):
+   ```env
+   DB_DRIVER=mysql
+   DB_HOST=localhost
+   DB_PORT=3306
+   DB_NAME=u123456789_shifting_dsc
+   DB_USER=u123456789_dsc_user
+   DB_PASS=YourStrongHostingerPassword
+   ```
+2. **Where to find these in Hostinger hPanel**:
+   - Go to **Databases** -> **MySQL Databases**.
+   - Note the **MySQL Database Name** and **MySQL Username** (they always include your account prefix, e.g., `u123456789_...`).
+   - The host is usually `localhost`.
+   - Make sure your database user has **All Privileges** assigned.
+
+### Step 3: Automatic Table Initialization
+- On first visit, `config.php` will **automatically connect to your MySQL database and create all tables** (`items`, `item_images`, `activity_logs`) and populate the initial seed records!
+- Alternatively, you can also import `database.sql` into phpMyAdmin.
+
+> **Security Note:** The `.env` file is excluded in `.gitignore` so your private database credentials will never be committed or exposed to GitHub.
 
 ---
 
@@ -78,30 +102,10 @@ CREATE TABLE activity_logs (
 
 ## 🚀 How to Run Locally
 
-### Option 1: Built-in PHP Server (Fastest)
-Run the following in the repository root:
 ```bash
 php -S localhost:8000
 ```
-Open your browser and navigate to:
-```
-http://localhost:8000
-```
-*Note: SQLite database and tables will be created and seeded automatically on first visit!*
-
-### Option 2: Apache / XAMPP / WampServer / Laragon
-1. Copy or clone this folder into `htdocs` or `www`.
-2. (Optional) If you prefer MySQL over SQLite:
-   - Create a MySQL database named `shifting_dsc`.
-   - Import `database.sql`.
-   - In `config.php`, change `define('DB_DRIVER', 'sqlite');` to `define('DB_DRIVER', 'mysql');` and enter your MySQL credentials.
-3. Access `http://localhost/shifting_dsc` in your browser.
-
----
-
-## 📱 Mobile & Camera Usage
-- On mobile devices (iOS / Android) and laptops with webcams, browser permissions must be granted for Camera access when prompted.
-- You can switch between Front and Rear cameras using the **Switch Camera** button in the camera modal.
+Open **`http://localhost:8000`** in your browser.
 
 ---
 

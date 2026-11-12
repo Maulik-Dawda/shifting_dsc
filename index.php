@@ -190,7 +190,10 @@ require_once __DIR__ . '/header.php';
                                     <?= $statusBadge ?>
                                 </div>
                                 <div class="text-xs text-slate-500 mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-                                    <span><i class="fa-solid fa-barcode mr-1 text-slate-400"></i> <code class="bg-slate-100 px-1 py-0.5 rounded text-slate-700"><?= htmlspecialchars($item['serial_number']) ?></code></span>
+                                    <span><i class="fa-solid fa-barcode mr-1 text-emerald-600"></i> <code class="bg-emerald-50 text-emerald-800 px-1 py-0.5 rounded font-bold"><?= htmlspecialchars($item['barcode_id'] ?: $item['serial_number']) ?></code></span>
+                                    <?php if (!empty($item['serial_number'])): ?>
+                                        <span><i class="fa-solid fa-hashtag mr-1 text-slate-400"></i> <code class="bg-slate-100 px-1 py-0.5 rounded text-slate-700"><?= htmlspecialchars($item['serial_number']) ?></code></span>
+                                    <?php endif; ?>
                                     <span><i class="fa-solid fa-layer-group mr-1 text-slate-400"></i> <?= htmlspecialchars($item['category']) ?></span>
                                     <?php if ($imgCount > 0): ?>
                                         <span class="text-sky-600 font-medium"><i class="fa-solid fa-camera mr-1"></i> <?= $imgCount ?> photo<?= $imgCount > 1 ? 's' : '' ?></span>
@@ -201,7 +204,7 @@ require_once __DIR__ . '/header.php';
 
                         <div class="flex items-center space-x-2 flex-shrink-0">
                             <?php if ($item['status'] !== 'reached'): ?>
-                                <a href="reached.php?scan=<?= urlencode($item['serial_number']) ?>" class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg text-xs font-medium" title="Mark as Reached">
+                                <a href="reached.php?scan=<?= urlencode($item['barcode_id'] ?: $item['serial_number']) ?>" class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg text-xs font-medium" title="Mark as Reached">
                                     <i class="fa-solid fa-clipboard-check text-base"></i>
                                 </a>
                             <?php endif; ?>

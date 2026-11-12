@@ -4,12 +4,13 @@ require_once __DIR__ . '/config.php';
 $db = get_db();
 
 $error = '';
-$prefillSn = isset($_GET['sn']) ? trim($_GET['sn']) : '';
+$prefillBc = isset($_GET['bc']) ? trim($_GET['bc']) : (isset($_GET['sn']) ? trim($_GET['sn']) : '');
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $brand = trim($_POST['brand'] ?? '');
     $model = trim($_POST['model'] ?? '');
+    $barcodeId = trim($_POST['barcode_id'] ?? '');
     $serialNumber = trim($_POST['serial_number'] ?? '');
     $category = trim($_POST['category'] ?? 'General');
     $oldLocation = trim($_POST['old_location'] ?? '');
@@ -17,22 +18,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $status = trim($_POST['status'] ?? 'packed');
     $oldCondition = trim($_POST['old_condition'] ?? '');
 
-    if (empty($brand) || empty($model) || empty($serialNumber)) {
-        $error = 'Brand, Model, and Serial Number (S/N) are required.';
+    if (empty($brand) || empty($model) || empty($barcodeId)) {
+        $error = 'Brand, Model, and Barcode ID are required.';
     } else {
-        // Check if serial number already exists
-        $checkStmt = $db->prepare("SELECT id FROM items WHERE UPPER(serial_number) = UPPER(:sn)");
-        $checkStmt->execute([':sn' => $serialNumber]);
+        // Check if Barcode ID already exists
+        $checkStmt = $db->prepare("SELECT id FROM items WHERE UPPER(barcode_id) = UPPER(:bc)");
+        $checkStmt->execute([':bc' => $barcodeId]);
         if ($checkStmt->fetch()) {
-            $error = "An item with Serial Number '{$serialNumber}' is already registered in inventory.";
+            $error = "An item with Barcode ID '{$barcodeId}' is already registered in inventory.";
         } else {
             try {
                 $stmt = $db->prepare("
                     INSERT INTO items (
-                        brand, model, serial_number, category, old_location, 
+                        brand, model, barcode_id, serial_number, category, old_location, 
                         new_location, status, old_condition, created_at
                     ) VALUES (
-                        :brand, :model, :serial_number, :category, :old_location, 
+                        :brand, :model, :barcode_id, :serial_number, :category, :old_location, 
                         :new_location, :status, :old_condition, :created_at
                     )
                 ");
@@ -40,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([
                     ':brand' => $brand,
                     ':model' => $model,
+                    ':barcode_id' => $barcodeId,
                     ':serial_number' => $serialNumber,
                     ':category' => $category,
                     ':old_location' => $oldLocation,
@@ -98,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 // Log Activity
-                log_activity($itemId, 'Item Packed', "Registered item {$brand} {$model} (S/N: {$serialNumber}) at Old Office with {$savedImagesCount} photo(s).");
+                log_activity($itemId, 'Item Packed', "Registered item {$brand} {$model} (Barcode ID: {$barcodeId}, S/N: {$serialNumber}) at Old Office with {$savedImagesCount} photo(s).");
 
                 header("Location: view.php?id={$itemId}&msg=" . urlencode("Item {$brand} {$model} registered successfully with {$savedImagesCount} photo(s)!"));
                 exit;
@@ -186,17 +188,18 @@ require_once __DIR__ . '/header.php';
                         <input type="text" name="model" id="modelInput" required placeholder="e.g. Latitude 5420, ProDesk 400" value="<?= htmlspecialchars($_POST['model'] ?? '') ?>" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none transition-shadow">
                     </div>
 
-                    <!-- Serial Number with Barcode Scanner Integration -->
+                    <!-- Barcode ID with Barcode Scanner Integration -->
                     <div class="sm:col-span-2">
                         <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                            Serial Number (S/N) <span class="text-red-500">*</span>
+                            Barcode ID <span class="text-red-500">*</span>
+                            <span class="text-slate-400 font-normal lowercase">(scanned via barcode sticker / asset tag)</span>
                         </label>
                         <div class="flex gap-2">
                             <div class="relative flex-grow">
                                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                                     <i class="fa-solid fa-barcode"></i>
                                 </div>
-                                <input type="text" name="serial_number" id="serialNumberInput" required placeholder="Scan barcode or type S/N" value="<?= htmlspecialchars($_POST['serial_number'] ?? $prefillSn) ?>" class="w-full pl-10 pr-3.5 py-2.5 text-sm font-mono tracking-wider border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none uppercase bg-slate-50 focus:bg-white transition-all">
+                                <input type="text" name="barcode_id" id="barcodeIdInput" required placeholder="Scan barcode or type Barcode ID" value="<?= htmlspecialchars($_POST['barcode_id'] ?? $prefillBc) ?>" class="w-full pl-10 pr-3.5 py-2.5 text-sm font-mono tracking-wider border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none uppercase bg-slate-50 focus:bg-white transition-all">
                             </div>
                             <!-- Barcode Scanner Trigger Button -->
                             <button type="button" onclick="openItemBarcodeScanner()" class="inline-flex items-center px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-medium text-xs sm:text-sm shadow-sm transition-colors flex-shrink-0">
@@ -204,7 +207,22 @@ require_once __DIR__ . '/header.php';
                                 <span>Scan Barcode</span>
                             </button>
                         </div>
-                        <p class="text-[11px] text-slate-500 mt-1">Click "Scan Barcode" to use your device camera to scan Code-128, QR Code, or serial barcodes.</p>
+                        <p class="text-[11px] text-slate-500 mt-1">Click "Scan Barcode" to use your device camera to scan Code-128, QR Code, or serial barcodes into Barcode ID.</p>
+                    </div>
+
+                    <!-- Serial Number (S/N) - Manual Input Field -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                            Serial Number (S/N)
+                            <span class="text-slate-400 font-normal lowercase">(add manually from hardware label)</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                <i class="fa-solid fa-hashtag"></i>
+                            </div>
+                            <input type="text" name="serial_number" id="serialNumberInput" placeholder="e.g. SN-882194-X, C02G89XYMD6R..." value="<?= htmlspecialchars($_POST['serial_number'] ?? '') ?>" class="w-full pl-10 pr-3.5 py-2.5 text-sm font-mono border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none uppercase bg-white transition-all">
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1">Manufacturer hardware serial number, entered manually.</p>
                     </div>
 
                     <!-- Category -->
@@ -471,17 +489,17 @@ function closeItemCamera() {
     itemPhotoModule.close();
 }
 
-// Initialize Barcode Scanner instance for S/N input
+// Initialize Barcode Scanner instance for Barcode ID input
 const itemBarcodeScanner = new BarcodeScannerModule({
     readerElementId: 'itemBarcodeReader',
-    targetInputId: 'serialNumberInput',
+    targetInputId: 'barcodeIdInput',
     modalId: 'itemBarcodeModal',
     onScanSuccess: (scannedText) => {
         Swal.fire({
             toast: true,
             position: 'top-end',
             icon: 'success',
-            title: `Barcode Scanned: ${scannedText}`,
+            title: `Barcode ID Scanned: ${scannedText}`,
             showConfirmButton: false,
             timer: 2500
         });

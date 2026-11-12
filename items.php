@@ -13,12 +13,13 @@ $where = [];
 $params = [];
 
 if (!empty($search)) {
-    $where[] = "(brand LIKE :s1 OR model LIKE :s2 OR serial_number LIKE :s3 OR old_location LIKE :s4 OR new_location LIKE :s5)";
+    $where[] = "(brand LIKE :s1 OR model LIKE :s2 OR barcode_id LIKE :s3 OR serial_number LIKE :s4 OR old_location LIKE :s5 OR new_location LIKE :s6)";
     $params[':s1'] = "%$search%";
     $params[':s2'] = "%$search%";
     $params[':s3'] = "%$search%";
     $params[':s4'] = "%$search%";
     $params[':s5'] = "%$search%";
+    $params[':s6'] = "%$search%";
 }
 
 if (!empty($category)) {
@@ -41,12 +42,13 @@ if ($export) {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename=dsc_shifting_inventory_' . date('Ymd_His') . '.csv');
     $output = fopen('php://output', 'w');
-    fputcsv($output, ['ID', 'Brand', 'Model', 'Serial Number', 'Category', 'Status', 'Old Location', 'New Location', 'Created At', 'Reached At', 'Reached By', 'Reached Condition', 'Remarks']);
+    fputcsv($output, ['ID', 'Brand', 'Model', 'Barcode ID', 'Serial Number', 'Category', 'Status', 'Old Location', 'New Location', 'Created At', 'Reached At', 'Reached By', 'Reached Condition', 'Remarks']);
     foreach ($items as $row) {
         fputcsv($output, [
             $row['id'],
             $row['brand'],
             $row['model'],
+            $row['barcode_id'] ?: $row['serial_number'],
             $row['serial_number'],
             $row['category'],
             $row['status'],
@@ -140,6 +142,7 @@ require_once __DIR__ . '/header.php';
             <thead>
                 <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                     <th class="py-3 px-4 sm:px-6">Product / Brand</th>
+                    <th class="py-3 px-4">Barcode ID</th>
                     <th class="py-3 px-4">Serial Number (S/N)</th>
                     <th class="py-3 px-4">Category</th>
                     <th class="py-3 px-4">Status</th>
@@ -151,7 +154,7 @@ require_once __DIR__ . '/header.php';
             <tbody class="divide-y divide-slate-100 text-sm">
                 <?php if (empty($items)): ?>
                     <tr>
-                        <td colspan="7" class="py-12 text-center text-slate-400">
+                        <td colspan="8" class="py-12 text-center text-slate-400">
                             <i class="fa-solid fa-box-open text-4xl mb-2 text-slate-300 block"></i>
                             No items found matching the selected criteria.
                         </td>
@@ -168,11 +171,16 @@ require_once __DIR__ . '/header.php';
                                     <?= htmlspecialchars($item['brand']) ?> <?= htmlspecialchars($item['model']) ?>
                                 </a>
                             </td>
-                            <!-- S/N -->
+                            <!-- Barcode ID -->
                             <td class="py-3.5 px-4 font-mono text-xs">
-                                <span class="bg-slate-100 text-slate-800 px-2 py-1 rounded font-semibold border border-slate-200">
-                                    <?= htmlspecialchars($item['serial_number']) ?>
+                                <span class="bg-emerald-50 text-emerald-800 px-2 py-1 rounded font-bold border border-emerald-200 flex items-center w-fit space-x-1">
+                                    <i class="fa-solid fa-barcode text-[11px] text-emerald-600"></i>
+                                    <span><?= htmlspecialchars($item['barcode_id'] ?: $item['serial_number']) ?></span>
                                 </span>
+                            </td>
+                            <!-- S/N (Manual) -->
+                            <td class="py-3.5 px-4 font-mono text-xs text-slate-700">
+                                <?= !empty($item['serial_number']) ? htmlspecialchars($item['serial_number']) : '<span class="text-slate-400 italic">None</span>' ?>
                             </td>
                             <!-- Category -->
                             <td class="py-3.5 px-4 text-xs text-slate-600">
@@ -219,7 +227,7 @@ require_once __DIR__ . '/header.php';
                             <td class="py-3.5 px-4 text-right text-xs">
                                 <div class="flex items-center justify-end space-x-1.5">
                                     <?php if ($item['status'] !== 'reached'): ?>
-                                        <a href="reached.php?scan=<?= urlencode($item['serial_number']) ?>" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg" title="Mark Reached">
+                                        <a href="reached.php?scan=<?= urlencode($item['barcode_id'] ?: $item['serial_number']) ?>" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg" title="Mark Reached">
                                             <i class="fa-solid fa-clipboard-check text-base"></i>
                                         </a>
                                     <?php endif; ?>

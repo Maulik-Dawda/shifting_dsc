@@ -269,7 +269,8 @@ function initialize_database($pdo, $driver = 'mysql') {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 brand TEXT NOT NULL,
                 model TEXT NOT NULL,
-                serial_number TEXT NOT NULL UNIQUE,
+                barcode_id TEXT NOT NULL DEFAULT '',
+                serial_number TEXT DEFAULT '',
                 category TEXT DEFAULT 'General',
                 old_location TEXT DEFAULT '',
                 new_location TEXT DEFAULT '',
@@ -300,6 +301,15 @@ function initialize_database($pdo, $driver = 'mysql') {
             );
         ");
 
+        // SQLite migration: ensure barcode_id column exists
+        try {
+            $cols = $pdo->query("PRAGMA table_info(items)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            if (!in_array('barcode_id', $cols)) {
+                $pdo->exec("ALTER TABLE items ADD COLUMN barcode_id TEXT DEFAULT ''");
+                $pdo->exec("UPDATE items SET barcode_id = serial_number WHERE barcode_id = '' OR barcode_id IS NULL");
+            }
+        } catch (Throwable $e) {}
+
         seed_sample_data($pdo);
 
     } else {
@@ -309,7 +319,8 @@ function initialize_database($pdo, $driver = 'mysql') {
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 brand VARCHAR(100) NOT NULL,
                 model VARCHAR(100) NOT NULL,
-                serial_number VARCHAR(150) NOT NULL UNIQUE,
+                barcode_id VARCHAR(150) NOT NULL,
+                serial_number VARCHAR(150) DEFAULT '',
                 category VARCHAR(100) DEFAULT 'General',
                 old_location VARCHAR(150) DEFAULT '',
                 new_location VARCHAR(150) DEFAULT '',
@@ -319,7 +330,11 @@ function initialize_database($pdo, $driver = 'mysql') {
                 reached_at DATETIME DEFAULT NULL,
                 reached_by VARCHAR(100) DEFAULT NULL,
                 reached_condition VARCHAR(50) DEFAULT NULL,
-                reached_notes TEXT DEFAULT NULL
+                reached_notes TEXT DEFAULT NULL,
+                UNIQUE KEY idx_barcode_id (barcode_id),
+                KEY idx_serial_number (serial_number),
+                KEY idx_status (status),
+                KEY idx_category (category)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
             CREATE TABLE IF NOT EXISTS item_images (
@@ -340,7 +355,14 @@ function initialize_database($pdo, $driver = 'mysql') {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
 
-        // Safely migrate columns to VARCHAR(50) to prevent any strict ENUM truncation crashes
+        // Safely migrate existing tables: ensure barcode_id exists & column types are VARCHAR(50)
+        try {
+            $pdo->exec("ALTER TABLE items ADD COLUMN barcode_id VARCHAR(150) NULL AFTER model");
+            $pdo->exec("UPDATE items SET barcode_id = serial_number WHERE barcode_id IS NULL OR barcode_id = ''");
+        } catch (Throwable $bcEx) {
+            // Already has barcode_id column
+        }
+
         try {
             $pdo->exec("ALTER TABLE items MODIFY COLUMN status VARCHAR(50) NOT NULL DEFAULT 'packed'");
             $pdo->exec("ALTER TABLE items MODIFY COLUMN reached_condition VARCHAR(50) DEFAULT NULL");
@@ -365,7 +387,8 @@ function seed_sample_data($pdo) {
             [
                 'brand' => 'Dell',
                 'model' => 'OptiPlex 7090 Desktop',
-                'serial_number' => 'DSC-DT-7090-001',
+                'barcode_id' => 'BC-DSC-001',
+                'serial_number' => 'SN-DELL-7090-XYZ',
                 'category' => 'Workstation',
                 'old_location' => 'Old Office - IT Dept Desk 04',
                 'new_location' => 'New Office - 3rd Floor IT Bay',
@@ -379,7 +402,8 @@ function seed_sample_data($pdo) {
             [
                 'brand' => 'HP',
                 'model' => 'LaserJet Pro MFP M428fdw',
-                'serial_number' => 'DSC-PR-428-8821',
+                'barcode_id' => 'BC-DSC-002',
+                'serial_number' => 'SN-HP-428-8821',
                 'category' => 'Printers',
                 'old_location' => 'Old Office - Admin Printing Station',
                 'new_location' => 'New Office - Admin Print Hub',
@@ -393,7 +417,8 @@ function seed_sample_data($pdo) {
             [
                 'brand' => 'Apple',
                 'model' => 'MacBook Pro 16\" M2',
-                'serial_number' => 'DSC-MBP-16-9923',
+                'barcode_id' => 'BC-DSC-003',
+                'serial_number' => 'C02G89XYMD6R',
                 'category' => 'Laptops',
                 'old_location' => 'Old Office - Design Studio Desk 01',
                 'new_location' => 'New Office - Creative Wing Desk 12',
@@ -407,7 +432,8 @@ function seed_sample_data($pdo) {
             [
                 'brand' => 'Cisco',
                 'model' => 'Catalyst 2960-X 48-Port Switch',
-                'serial_number' => 'DSC-SW-2960-5541',
+                'barcode_id' => 'BC-DSC-004',
+                'serial_number' => 'FCW1942B02Y',
                 'category' => 'Networking',
                 'old_location' => 'Old Office - Main Server Rack 1U-12',
                 'new_location' => 'New Office - Server Room Rack A-04',
@@ -421,7 +447,8 @@ function seed_sample_data($pdo) {
             [
                 'brand' => 'Samsung',
                 'model' => '27\" Curved LED Monitor S27E510CS',
-                'serial_number' => 'DSC-MON-27-3312',
+                'barcode_id' => 'BC-DSC-005',
+                'serial_number' => 'ZX82HV1092',
                 'category' => 'Monitors',
                 'old_location' => 'Old Office - Finance Desk 02',
                 'new_location' => 'New Office - Finance Hub Desk 08',
@@ -436,10 +463,10 @@ function seed_sample_data($pdo) {
 
         $stmt = $pdo->prepare("
             INSERT INTO items (
-                brand, model, serial_number, category, old_location, new_location, 
+                brand, model, barcode_id, serial_number, category, old_location, new_location, 
                 status, old_condition, reached_by, reached_condition, reached_notes, reached_at
             ) VALUES (
-                :brand, :model, :serial_number, :category, :old_location, :new_location,
+                :brand, :model, :barcode_id, :serial_number, :category, :old_location, :new_location,
                 :status, :old_condition, :reached_by, :reached_condition, :reached_notes, :reached_at
             )
         ");

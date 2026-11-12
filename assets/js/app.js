@@ -58,12 +58,12 @@ function lookupManualSerial() {
 /**
  * When a barcode is detected by the global scanner
  */
-async function handleGlobalBarcodeDetected(serialNumber) {
+async function handleGlobalBarcodeDetected(barcode) {
     closeGlobalScanner();
     
     Swal.fire({
         title: 'Looking up Item...',
-        text: 'Searching for ' + serialNumber,
+        text: 'Searching Barcode: ' + barcode,
         allowOutsideClick: false,
         didOpen: () => {
             Swal.showLoading();
@@ -71,21 +71,24 @@ async function handleGlobalBarcodeDetected(serialNumber) {
     });
 
     try {
-        const response = await fetch(`api/scan-lookup.php?sn=${encodeURIComponent(serialNumber)}`);
+        const response = await fetch(`api/scan-lookup.php?barcode=${encodeURIComponent(barcode)}`);
         const result = await response.json();
 
         if (result.success && result.item) {
             Swal.close();
-            // Prompt user where they want to go: View details or Mark Reached
+            const itemBc = result.item.barcode_id || result.item.serial_number;
+            const itemSn = result.item.serial_number || 'None';
+
+            // Prompt user: Mark Reached or View details
             if (result.item.status !== 'reached') {
                 Swal.fire({
                     icon: 'success',
                     title: `${result.item.brand} ${result.item.model}`,
                     html: `
-                        <div class="text-left text-sm bg-slate-50 p-3 rounded-lg border border-slate-200 mb-3">
-                            <div><strong>S/N:</strong> <code class="bg-slate-200 px-1 py-0.5 rounded">${result.item.serial_number}</code></div>
-                            <div><strong>Current Status:</strong> <span class="capitalize font-semibold text-amber-600">${result.item.status}</span></div>
-                            <div><strong>Source:</strong> ${result.item.old_location || 'Old Office'}</div>
+                        <div class="text-left text-sm bg-slate-50 p-3 rounded-lg border border-slate-200 mb-3 space-y-1">
+                            <div><strong>Barcode ID:</strong> <code class="bg-emerald-100 text-emerald-800 px-1 py-0.5 rounded font-bold">${itemBc}</code></div>
+                            <div><strong>Serial Number (S/N):</strong> <span class="font-mono text-slate-700">${itemSn}</span></div>
+                            <div><strong>Status:</strong> <span class="capitalize font-semibold text-amber-600">${result.item.status}</span></div>
                             <div><strong>Destination:</strong> ${result.item.new_location || 'New Office'}</div>
                         </div>
                         <p class="text-xs text-slate-500">Would you like to mark this item as reached at the new office or view full details?</p>
@@ -97,7 +100,7 @@ async function handleGlobalBarcodeDetected(serialNumber) {
                     cancelButtonColor: '#0284c7'
                 }).then((action) => {
                     if (action.isConfirmed) {
-                        window.location.href = `reached.php?scan=${encodeURIComponent(result.item.serial_number)}`;
+                        window.location.href = `reached.php?scan=${encodeURIComponent(itemBc)}`;
                     } else if (action.dismiss === Swal.DismissReason.cancel) {
                         window.location.href = `view.php?id=${result.item.id}`;
                     }
@@ -107,7 +110,13 @@ async function handleGlobalBarcodeDetected(serialNumber) {
                 Swal.fire({
                     icon: 'info',
                     title: `${result.item.brand} ${result.item.model}`,
-                    text: `This item has already reached the new office (Status: Reached).`,
+                    html: `
+                        <div class="text-left text-sm bg-slate-50 p-3 rounded-lg border border-slate-200 mb-3 space-y-1">
+                            <div><strong>Barcode ID:</strong> <code class="bg-emerald-100 text-emerald-800 px-1 py-0.5 rounded font-bold">${itemBc}</code></div>
+                            <div><strong>S/N:</strong> <span class="font-mono">${itemSn}</span></div>
+                            <div class="text-emerald-700 font-semibold"><i class="fa-solid fa-circle-check mr-1"></i> Arrived at New Office</div>
+                        </div>
+                    `,
                     confirmButtonText: 'View Item Details',
                     confirmButtonColor: '#0284c7'
                 }).then(() => {
@@ -117,15 +126,15 @@ async function handleGlobalBarcodeDetected(serialNumber) {
         } else {
             Swal.fire({
                 icon: 'question',
-                title: 'Item Not Found',
-                text: `No registered item found with Serial Number "${serialNumber}".`,
+                title: 'Barcode Not Found',
+                text: `No registered item found with Barcode ID "${barcode}".`,
                 showCancelButton: true,
                 confirmButtonText: 'Register as New Item',
                 confirmButtonColor: '#0284c7',
                 cancelButtonText: 'Cancel'
             }).then((action) => {
                 if (action.isConfirmed) {
-                    window.location.href = `add-item.php?sn=${encodeURIComponent(serialNumber)}`;
+                    window.location.href = `add-item.php?bc=${encodeURIComponent(barcode)}`;
                 }
             });
         }

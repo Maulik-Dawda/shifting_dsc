@@ -23,6 +23,7 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $brand = trim($_POST['brand'] ?? '');
     $model = trim($_POST['model'] ?? '');
+    $barcodeId = trim($_POST['barcode_id'] ?? '');
     $serialNumber = trim($_POST['serial_number'] ?? '');
     $category = trim($_POST['category'] ?? 'General');
     $oldLocation = trim($_POST['old_location'] ?? '');
@@ -33,20 +34,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $reachedBy = trim($_POST['reached_by'] ?? '');
     $reachedNotes = trim($_POST['reached_notes'] ?? '');
 
-    if (empty($brand) || empty($model) || empty($serialNumber)) {
-        $error = 'Brand, Model, and Serial Number are required.';
+    if (empty($brand) || empty($model) || empty($barcodeId)) {
+        $error = 'Brand, Model, and Barcode ID are required.';
     } else {
-        // Check duplicate serial number on another item
-        $checkStmt = $db->prepare("SELECT id FROM items WHERE UPPER(serial_number) = UPPER(:sn) AND id != :id");
-        $checkStmt->execute([':sn' => $serialNumber, ':id' => $id]);
+        // Check duplicate barcode ID on another item
+        $checkStmt = $db->prepare("SELECT id FROM items WHERE UPPER(barcode_id) = UPPER(:bc) AND id != :id");
+        $checkStmt->execute([':bc' => $barcodeId, ':id' => $id]);
         if ($checkStmt->fetch()) {
-            $error = "Serial Number '{$serialNumber}' is already assigned to another item.";
+            $error = "Barcode ID '{$barcodeId}' is already assigned to another item.";
         } else {
             try {
                 $upStmt = $db->prepare("
                     UPDATE items SET
                         brand = :brand,
                         model = :model,
+                        barcode_id = :barcode_id,
                         serial_number = :serial_number,
                         category = :category,
                         old_location = :old_location,
@@ -62,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $upStmt->execute([
                     ':brand' => $brand,
                     ':model' => $model,
+                    ':barcode_id' => $barcodeId,
                     ':serial_number' => $serialNumber,
                     ':category' => $category,
                     ':old_location' => $oldLocation,
@@ -74,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':id' => $id
                 ]);
 
-                log_activity($id, 'Item Updated', "Updated details for {$brand} {$model} (S/N: {$serialNumber})");
+                log_activity($id, 'Item Updated', "Updated details for {$brand} {$model} (Barcode ID: {$barcodeId}, S/N: {$serialNumber})");
                 header("Location: view.php?id={$id}&msg=" . urlencode("Item details updated successfully!"));
                 exit;
 
@@ -132,9 +135,14 @@ require_once __DIR__ . '/header.php';
                     <input type="text" name="model" required value="<?= htmlspecialchars($_POST['model'] ?? $item['model']) ?>" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
                 </div>
 
-                <div class="sm:col-span-2">
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Serial Number (S/N)</label>
-                    <input type="text" name="serial_number" required value="<?= htmlspecialchars($_POST['serial_number'] ?? $item['serial_number']) ?>" class="w-full px-3.5 py-2.5 text-sm font-mono border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none uppercase bg-slate-50">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Barcode ID <span class="text-red-500">*</span></label>
+                    <input type="text" name="barcode_id" required value="<?= htmlspecialchars($_POST['barcode_id'] ?? ($item['barcode_id'] ?: $item['serial_number'])) ?>" class="w-full px-3.5 py-2.5 text-sm font-mono border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none uppercase bg-slate-50">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Serial Number (S/N) <span class="text-slate-400 font-normal lowercase">(manual)</span></label>
+                    <input type="text" name="serial_number" value="<?= htmlspecialchars($_POST['serial_number'] ?? $item['serial_number']) ?>" placeholder="e.g. SN-882194-X" class="w-full px-3.5 py-2.5 text-sm font-mono border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none uppercase bg-white">
                 </div>
 
                 <div>

@@ -26,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $itemId = isset($_POST['item_id']) ? intval($_POST['item_id']) : 0;
+$barcodeId = isset($_POST['barcode_id']) ? trim($_POST['barcode_id']) : '';
 $serialNumber = isset($_POST['serial_number']) ? trim($_POST['serial_number']) : '';
 $reachedBy = isset($_POST['reached_by']) && trim($_POST['reached_by']) !== '' ? trim($_POST['reached_by']) : 'Staff';
 $reachedCondition = isset($_POST['reached_condition']) ? trim($_POST['reached_condition']) : 'perfect';
@@ -43,20 +44,23 @@ if (!in_array($reachedCondition, $validConditions)) {
 try {
     $db = get_db();
     
-    // Find item
+    // Find item by ID, Barcode ID, or Serial Number
     if ($itemId > 0) {
         $stmt = $db->prepare("SELECT * FROM items WHERE id = :id");
         $stmt->execute([':id' => $itemId]);
+    } else if (!empty($barcodeId)) {
+        $stmt = $db->prepare("SELECT * FROM items WHERE UPPER(barcode_id) = UPPER(:bc) OR UPPER(serial_number) = UPPER(:bc)");
+        $stmt->execute([':bc' => $barcodeId]);
     } else if (!empty($serialNumber)) {
-        $stmt = $db->prepare("SELECT * FROM items WHERE UPPER(serial_number) = UPPER(:sn)");
+        $stmt = $db->prepare("SELECT * FROM items WHERE UPPER(barcode_id) = UPPER(:sn) OR UPPER(serial_number) = UPPER(:sn)");
         $stmt->execute([':sn' => $serialNumber]);
     } else {
-        respond(false, 'Item ID or Serial Number is required to mark as reached.');
+        respond(false, 'Item ID, Barcode ID, or Serial Number is required to mark as reached.');
     }
 
     $item = $stmt->fetch();
     if (!$item) {
-        respond(false, 'Item not found in inventory. Please verify serial number.');
+        respond(false, 'Item not found in inventory. Please verify Barcode ID / Serial Number.');
     }
 
     $itemId = $item['id'];
@@ -141,7 +145,8 @@ try {
     $actionDesc = "Item marked as REACHED at New Office by {$reachedBy}. Condition: {$reachedCondition}. Added {$savedImageCount} arrival photo(s).";
     log_activity($itemId, 'Product Reached', $actionDesc);
 
-    $msg = "{$item['brand']} {$item['model']} (S/N: {$item['serial_number']}) marked as Reached!";
+    $bcLabel = !empty($item['barcode_id']) ? $item['barcode_id'] : $item['serial_number'];
+    $msg = "{$item['brand']} {$item['model']} (Barcode ID: {$bcLabel}) marked as Reached!";
     respond(true, $msg, $redirectTo, ['item_id' => $itemId, 'images_added' => $savedImageCount]);
 
 } catch (Throwable $e) {

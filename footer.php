@@ -54,9 +54,9 @@
 
             <!-- Manual Search Fallback -->
             <div class="p-4 bg-white border-t border-slate-100">
-                <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Or Enter Serial Number Manually</label>
+                <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Or Enter Barcode ID / S/N Manually</label>
                 <div class="flex gap-2">
-                    <input type="text" id="manualScanInput" placeholder="e.g. DSC-DT-7090-001" class="flex-grow px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:outline-none uppercase">
+                    <input type="text" id="manualScanInput" placeholder="e.g. BC-DSC-001 or S/N..." class="flex-grow px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:outline-none uppercase">
                     <button type="button" onclick="lookupManualSerial()" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium rounded-lg">
                         Find
                     </button>

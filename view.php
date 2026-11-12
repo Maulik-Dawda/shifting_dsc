@@ -157,6 +157,10 @@ require_once __DIR__ . '/header.php';
                 </div>
 
                 <div class="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+                    <span><i class="fa-solid fa-barcode text-sky-600 mr-1"></i> Barcode ID: <strong class="text-slate-800 font-mono"><?= htmlspecialchars($item['barcode_id'] ?: $item['serial_number']) ?></strong></span>
+                    <?php if (!empty($item['serial_number'])): ?>
+                        <span><i class="fa-solid fa-hashtag text-slate-400 mr-1"></i> S/N: <strong class="text-slate-700 font-mono"><?= htmlspecialchars($item['serial_number']) ?></strong></span>
+                    <?php endif; ?>
                     <span><i class="fa-solid fa-layer-group text-slate-400 mr-1"></i> Category: <strong class="text-slate-700"><?= htmlspecialchars($item['category']) ?></strong></span>
                     <span><i class="fa-regular fa-calendar text-slate-400 mr-1"></i> Registered: <?= date('M j, Y g:i A', strtotime($item['created_at'])) ?></span>
                 </div>
@@ -165,9 +169,12 @@ require_once __DIR__ . '/header.php';
 
         <!-- Printable Barcode Box -->
         <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col items-center justify-center text-center shadow-inner">
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Serial Number Barcode</span>
-            <svg data-barcode="<?= htmlspecialchars($item['serial_number']) ?>" class="max-w-[200px] h-11"></svg>
-            <span class="text-xs font-mono font-bold text-slate-800 tracking-wider mt-0.5"><?= htmlspecialchars($item['serial_number']) ?></span>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Barcode ID</span>
+            <svg data-barcode="<?= htmlspecialchars($item['barcode_id'] ?: $item['serial_number']) ?>" class="max-w-[200px] h-11"></svg>
+            <span class="text-xs font-mono font-bold text-slate-800 tracking-wider mt-0.5"><?= htmlspecialchars($item['barcode_id'] ?: $item['serial_number']) ?></span>
+            <?php if (!empty($item['serial_number'])): ?>
+                <span class="text-[11px] text-slate-500 font-mono mt-0.5">S/N: <?= htmlspecialchars($item['serial_number']) ?></span>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -385,6 +392,7 @@ require_once __DIR__ . '/header.php';
         <form id="viewArrivalForm" action="api/mark-reached.php" method="POST" enctype="multipart/form-data" class="p-6 space-y-5">
             <input type="hidden" name="is_ajax" value="1">
             <input type="hidden" name="item_id" value="<?= $item['id'] ?>">
+            <input type="hidden" name="barcode_id" value="<?= htmlspecialchars($item['barcode_id'] ?: $item['serial_number']) ?>">
             <input type="hidden" name="serial_number" value="<?= htmlspecialchars($item['serial_number']) ?>">
             <input type="hidden" name="camera_images" id="viewArrivalCameraImages" value="[]">
 

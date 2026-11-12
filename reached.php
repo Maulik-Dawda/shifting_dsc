@@ -18,11 +18,12 @@ if ($filter === 'pending') {
 }
 
 if (!empty($search)) {
-    $where[] = "(brand LIKE :s1 OR model LIKE :s2 OR serial_number LIKE :s3 OR new_location LIKE :s4)";
+    $where[] = "(brand LIKE :s1 OR model LIKE :s2 OR barcode_id LIKE :s3 OR serial_number LIKE :s4 OR new_location LIKE :s5)";
     $params[':s1'] = "%$search%";
     $params[':s2'] = "%$search%";
     $params[':s3'] = "%$search%";
     $params[':s4'] = "%$search%";
+    $params[':s5'] = "%$search%";
 }
 
 $whereSql = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
@@ -225,7 +226,10 @@ require_once __DIR__ . '/header.php';
                             </div>
 
                             <div class="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
-                                <span><i class="fa-solid fa-barcode text-slate-400 mr-1"></i> S/N: <strong class="text-slate-700 font-mono"><?= htmlspecialchars($item['serial_number']) ?></strong></span>
+                                <span><i class="fa-solid fa-barcode text-emerald-600 mr-1"></i> Barcode ID: <strong class="text-slate-800 font-mono"><?= htmlspecialchars($item['barcode_id'] ?: $item['serial_number']) ?></strong></span>
+                                <?php if (!empty($item['serial_number'])): ?>
+                                    <span><i class="fa-solid fa-hashtag text-slate-400 mr-1"></i> S/N: <strong class="text-slate-700 font-mono"><?= htmlspecialchars($item['serial_number']) ?></strong></span>
+                                <?php endif; ?>
                                 <span><i class="fa-solid fa-location-dot text-emerald-600 mr-1"></i> Destination: <strong class="text-slate-700"><?= htmlspecialchars($item['new_location'] ?: 'New Office') ?></strong></span>
                                 <span><i class="fa-solid fa-layer-group text-slate-400 mr-1"></i> <?= htmlspecialchars($item['category']) ?></span>
                             </div>
@@ -289,6 +293,7 @@ require_once __DIR__ . '/header.php';
             <!-- Hidden Fields -->
             <input type="hidden" name="is_ajax" value="1">
             <input type="hidden" name="item_id" id="modalItemId" value="">
+            <input type="hidden" name="barcode_id" id="modalItemBarcode" value="">
             <input type="hidden" name="serial_number" id="modalItemSerial" value="">
             <input type="hidden" name="camera_images" id="arrivalCameraImages" value="[]">
 
@@ -299,9 +304,10 @@ require_once __DIR__ . '/header.php';
                 </div>
                 <div class="min-w-0 flex-grow">
                     <h4 id="modalItemTitle" class="font-bold text-slate-900 text-sm truncate">Product Brand & Model</h4>
-                    <div class="text-xs text-slate-500 mt-0.5 flex flex-wrap gap-x-3">
+                    <div class="text-xs text-slate-500 mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
+                        <span>Barcode: <strong id="modalItemBarcodeDisplay" class="font-mono text-emerald-700"></strong></span>
                         <span>S/N: <strong id="modalItemSerialDisplay" class="font-mono text-slate-800"></strong></span>
-                        <span>Destination: <strong id="modalItemDestDisplay" class="text-emerald-700"></strong></span>
+                        <span>Destination: <strong id="modalItemDestDisplay" class="text-slate-700"></strong></span>
                     </div>
                 </div>
             </div>
@@ -580,9 +586,11 @@ function openArrivalModal(itemId) {
 // Direct populator
 function openArrivalModalDirect(item, oldPhotos = []) {
     document.getElementById('modalItemId').value = item.id;
-    document.getElementById('modalItemSerial').value = item.serial_number;
+    document.getElementById('modalItemBarcode').value = item.barcode_id || item.serial_number || '';
+    document.getElementById('modalItemSerial').value = item.serial_number || '';
     document.getElementById('modalItemTitle').textContent = `${item.brand} ${item.model}`;
-    document.getElementById('modalItemSerialDisplay').textContent = item.serial_number;
+    document.getElementById('modalItemBarcodeDisplay').textContent = item.barcode_id || item.serial_number || '(none)';
+    document.getElementById('modalItemSerialDisplay').textContent = item.serial_number || 'N/A';
     document.getElementById('modalItemDestDisplay').textContent = item.new_location || 'New Office';
     document.getElementById('modalNewLocationInput').value = item.new_location || '';
     

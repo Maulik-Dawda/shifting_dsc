@@ -85,7 +85,7 @@ try {
 
     if (in_array('items', $tablesFound)) {
         $itemCount = $db->query("SELECT COUNT(*) FROM items")->fetchColumn();
-        $itemsSample = $db->query("SELECT id, brand, model, serial_number, status FROM items ORDER BY id DESC LIMIT 5")->fetchAll();
+        $itemsSample = $db->query("SELECT id, brand, model, barcode_id, serial_number, status FROM items ORDER BY id DESC LIMIT 5")->fetchAll();
     }
 } catch (Throwable $e) {
     $pdoError = $e->getMessage();
@@ -274,10 +274,15 @@ try {
                             <?php foreach ($itemsSample as $it): ?>
                                 <div class="p-2.5 px-3 flex items-center justify-between">
                                     <span class="font-semibold text-slate-200"><?= htmlspecialchars($it['brand']) ?> <?= htmlspecialchars($it['model']) ?></span>
-                                    <span class="font-mono text-[11px] text-slate-400"><?= htmlspecialchars($it['serial_number']) ?></span>
-                                    <span class="text-[11px] px-2 py-0.5 rounded <?= ($it['status'] === 'reached') ? 'bg-emerald-950 text-emerald-400' : 'bg-amber-950 text-amber-400' ?>">
-                                        <?= htmlspecialchars($it['status']) ?>
-                                    </span>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="font-mono text-[11px] text-emerald-400 font-bold"><?= htmlspecialchars($it['barcode_id'] ?: $it['serial_number']) ?></span>
+                                        <?php if (!empty($it['serial_number'])): ?>
+                                            <span class="font-mono text-[11px] text-slate-500">S/N: <?= htmlspecialchars($it['serial_number']) ?></span>
+                                        <?php endif; ?>
+                                        <span class="text-[11px] px-2 py-0.5 rounded <?= ($it['status'] === 'reached') ? 'bg-emerald-950 text-emerald-400' : 'bg-amber-950 text-amber-400' ?>">
+                                            <?= htmlspecialchars($it['status']) ?>
+                                        </span>
+                                    </div>
                                 </div>
                             <?php endforeach; ?>
                         </div>

@@ -16,7 +16,8 @@ CREATE TABLE `items` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `brand` varchar(100) NOT NULL,
   `model` varchar(100) NOT NULL,
-  `serial_number` varchar(150) NOT NULL,
+  `barcode_id` varchar(150) NOT NULL,
+  `serial_number` varchar(150) DEFAULT '',
   `category` varchar(100) DEFAULT 'General',
   `old_location` varchar(150) DEFAULT '',
   `new_location` varchar(150) DEFAULT '',
@@ -28,7 +29,8 @@ CREATE TABLE `items` (
   `reached_condition` varchar(50) DEFAULT NULL,
   `reached_notes` text DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `idx_serial_number` (`serial_number`),
+  UNIQUE KEY `idx_barcode_id` (`barcode_id`),
+  KEY `idx_serial_number` (`serial_number`),
   KEY `idx_status` (`status`),
   KEY `idx_category` (`category`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -63,14 +65,14 @@ CREATE TABLE `activity_logs` (
 -- --------------------------------------------------------
 -- Seed Initial Demo Data
 -- --------------------------------------------------------
-INSERT INTO `items` (`id`, `brand`, `model`, `serial_number`, `category`, `old_location`, `new_location`, `status`, `old_condition`, `created_at`, `reached_at`, `reached_by`, `reached_condition`, `reached_notes`) VALUES
-(1, 'Dell', 'OptiPlex 7090 Desktop', 'DSC-DT-7090-001', 'Workstation', 'Old Office - IT Dept Desk 04', 'New Office - 3rd Floor IT Bay', 'reached', 'Clean condition, power cord and HDMI cable attached in box.', NOW(), NOW(), 'Maulik Dawda', 'perfect', 'Received intact and booted up successfully at new office.'),
-(2, 'HP', 'LaserJet Pro MFP M428fdw', 'DSC-PR-428-8821', 'Printers', 'Old Office - Admin Printing Station', 'New Office - Admin Print Hub', 'packed', 'Toner removed and packed in separate anti-static pouch. Unit secured with bubble wrap.', NOW(), NULL, NULL, NULL, NULL),
-(3, 'Apple', 'MacBook Pro 16" M2', 'DSC-MBP-16-9923', 'Laptops', 'Old Office - Design Studio Desk 01', 'New Office - Creative Wing Desk 12', 'packed', 'Supplied with original 140W MagSafe charger and sleeve.', NOW(), NULL, NULL, NULL, NULL),
-(4, 'Cisco', 'Catalyst 2960-X 48-Port Switch', 'DSC-SW-2960-5541', 'Networking', 'Old Office - Main Server Rack 1U-12', 'New Office - Server Room Rack A-04', 'reached', 'Rack ears attached, console cable included.', NOW(), NOW(), 'IT Relocation Team', 'perfect', 'Mounted into Rack A at New Office.'),
-(5, 'Samsung', '27" Curved LED Monitor S27E510CS', 'DSC-MON-27-3312', 'Monitors', 'Old Office - Finance Desk 02', 'New Office - Finance Hub Desk 08', 'packed', 'Packed with foam corner protectors and power adapter.', NOW(), NULL, NULL, NULL, NULL);
+INSERT INTO `items` (`id`, `brand`, `model`, `barcode_id`, `serial_number`, `category`, `old_location`, `new_location`, `status`, `old_condition`, `created_at`, `reached_at`, `reached_by`, `reached_condition`, `reached_notes`) VALUES
+(1, 'Dell', 'OptiPlex 7090 Desktop', 'BC-DSC-001', 'SN-DELL-7090-XYZ', 'Workstation', 'Old Office - IT Dept Desk 04', 'New Office - 3rd Floor IT Bay', 'reached', 'Clean condition, power cord and HDMI cable attached in box.', NOW(), NOW(), 'Maulik Dawda', 'perfect', 'Received intact and booted up successfully at new office.'),
+(2, 'HP', 'LaserJet Pro MFP M428fdw', 'BC-DSC-002', 'SN-HP-428-8821', 'Printers', 'Old Office - Admin Printing Station', 'New Office - Admin Print Hub', 'packed', 'Toner removed and packed in separate anti-static pouch. Unit secured with bubble wrap.', NOW(), NULL, NULL, NULL, NULL),
+(3, 'Apple', 'MacBook Pro 16" M2', 'BC-DSC-003', 'C02G89XYMD6R', 'Laptops', 'Old Office - Design Studio Desk 01', 'New Office - Creative Wing Desk 12', 'packed', 'Supplied with original 140W MagSafe charger and sleeve.', NOW(), NULL, NULL, NULL, NULL),
+(4, 'Cisco', 'Catalyst 2960-X 48-Port Switch', 'BC-DSC-004', 'FCW1942B02Y', 'Networking', 'Old Office - Main Server Rack 1U-12', 'New Office - Server Room Rack A-04', 'reached', 'Rack ears attached, console cable included.', NOW(), NOW(), 'IT Relocation Team', 'perfect', 'Mounted into Rack A at New Office.'),
+(5, 'Samsung', '27" Curved LED Monitor S27E510CS', 'BC-DSC-005', 'ZX82HV1092', 'Monitors', 'Old Office - Finance Desk 02', 'New Office - Finance Hub Desk 08', 'packed', 'Packed with foam corner protectors and power adapter.', NOW(), NULL, NULL, NULL, NULL);
 
 INSERT INTO `activity_logs` (`item_id`, `action`, `details`) VALUES
 (NULL, 'System Initialized', 'Office shifting inventory system database initialized with default configuration.'),
-(1, 'Marked Reached', 'Item DSC-DT-7090-001 verified and received at New Office.'),
-(4, 'Marked Reached', 'Item DSC-SW-2960-5541 verified and received at New Office.');
+(1, 'Marked Reached', 'Item Barcode BC-DSC-001 verified and received at New Office.'),
+(4, 'Marked Reached', 'Item Barcode BC-DSC-004 verified and received at New Office.');
